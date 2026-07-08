@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tauri *)",
+      "Bash(Start-Sleep -Seconds 15)",
+      "Bash(Get-Content \"C:\\\\Users\\\\agrey\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-agrey-OneDrive-Documentos-GitHub-simtacv2-simtacv3\\\\8ca8d4c1-bcfe-4a31-822d-9b17f35dd95e\\\\tasks\\\\bl221eqvg.output\" -Tail 30)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "tauri"
+  ]
+}

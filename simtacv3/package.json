@@ -1,0 +1,16 @@
+{
+  "name": "simtacv3",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "dependencies": {
+    "milsymbol": "^3.0.4",
+    "ol": "^10.9.0"
+  }
+}
