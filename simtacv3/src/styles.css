@@ -260,8 +260,8 @@ button {
 /* Botón de Panel de Unidad */
 .unit-panel-btn {
   position: fixed;
-  bottom: 30px;
-  left: 30px;
+  top: 90px;
+  right: 20px;
   width: 70px;
   height: 70px;
   border-radius: 50%;
