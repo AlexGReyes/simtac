@@ -4,8 +4,8 @@
   line-height: 24px;
   font-weight: 400;
 
-  color: #0f0f0f;
-  background-color: #f6f6f6;
+  color: #2c3e50;
+  background-color: #ecf0f3;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -29,11 +29,11 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(180deg, #1a2b3d 0%, #0f1f2e 100%);
-  color: #fff;
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
+  color: #2c3e50;
   padding: 0 20px;
   height: 70px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 215, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   flex-shrink: 0;
   border-bottom: 2px solid #d4af37;
 }
@@ -68,13 +68,13 @@ body {
 .username {
   font-size: 14px;
   font-weight: 600;
-  color: #fff;
+  color: #2c3e50;
   margin-bottom: 2px;
 }
 
 .role {
   font-size: 11px;
-  color: rgba(212, 175, 55, 0.8);
+  color: #8b7c3a;
 }
 
 .system-section {
@@ -122,7 +122,7 @@ body {
   align-items: center;
   gap: 3px;
   padding: 8px 12px;
-  background-color: rgba(15, 31, 46, 0.5);
+  background-color: rgba(212, 175, 55, 0.08);
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 3px;
 }
@@ -130,7 +130,7 @@ body {
 .clock-label {
   font-size: 8px;
   font-weight: 700;
-  color: #d4af37;
+  color: #8b7c3a;
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -139,13 +139,13 @@ body {
   font-size: 18px;
   font-weight: 400;
   font-family: 'Courier New', monospace;
-  color: #4dd0e1;
+  color: #2c5aa0;
   letter-spacing: 1px;
 }
 
 .clock-date {
   font-size: 10px;
-  color: rgba(77, 208, 225, 0.8);
+  color: #2c5aa0;
   font-family: 'Courier New', monospace;
 }
 
@@ -172,8 +172,8 @@ main {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #fff;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #2c3e50;
   padding: 12px 16px;
   border-radius: 4px;
   font-family: monospace;
@@ -181,6 +181,8 @@ main {
   z-index: 1000;
   pointer-events: none;
   min-width: 250px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .coordinates-panel > div {
@@ -265,9 +267,9 @@ button {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-  color: #0f1f2e;
-  border: 3px solid #ffd700;
+  background: linear-gradient(135deg, #d4af37 0%, #c49b2e 100%);
+  color: #ffffff;
+  border: 3px solid #f5e6c8;
   font-weight: bold;
   font-size: 24px;
   cursor: pointer;
@@ -277,13 +279,13 @@ button {
   justify-content: center;
   gap: 4px;
   z-index: 999;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
   transition: all 0.3s ease;
 }
 
 .unit-panel-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.4);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
 }
 
 .unit-panel-btn:active {
@@ -330,7 +332,7 @@ button {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, #1a2b3d 0%, #0f1f2e 100%);
+  background: linear-gradient(180deg, #f5f8fb 0%, #ecf0f3 100%);
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -357,12 +359,12 @@ button {
   align-items: center;
   padding: 16px 20px;
   background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   flex-shrink: 0;
 }
 
 .modal-title {
-  color: #d4af37;
+  color: #8b7c3a;
   font-size: 18px;
   font-weight: 700;
   margin: 0;
@@ -374,7 +376,7 @@ button {
 .modal-close {
   background: transparent;
   border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  color: #8b7c3a;
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -388,7 +390,7 @@ button {
 }
 
 .modal-close:hover {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(212, 175, 55, 0.15);
   border-color: #d4af37;
 }
 
@@ -396,8 +398,8 @@ button {
 .modal-tabs {
   display: flex;
   gap: 0;
-  background: rgba(0, 0, 0, 0.3);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  background: rgba(212, 175, 55, 0.05);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   flex-shrink: 0;
   overflow-x: auto;
 }
@@ -407,7 +409,7 @@ button {
   padding: 12px 16px;
   background: transparent;
   border: none;
-  color: rgba(212, 175, 55, 0.6);
+  color: #8b7c3a;
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
@@ -421,13 +423,13 @@ button {
 
 .tab-btn:hover {
   color: #d4af37;
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .tab-btn.active {
   color: #d4af37;
   border-bottom-color: #d4af37;
-  background: rgba(212, 175, 55, 0.08);
+  background: rgba(212, 175, 55, 0.15);
 }
 
 /* Contenido del Modal */
@@ -435,7 +437,8 @@ button {
   flex: 1;
   overflow-y: auto;
   padding: 16px 20px;
-  color: #f0f0f0;
+  color: #2c3e50;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .tab-pane {
@@ -482,8 +485,8 @@ button {
   top: 70px;
   width: 70px;
   height: auto;
-  background: linear-gradient(180deg, rgba(26, 43, 61, 0.95) 0%, rgba(15, 31, 46, 0.98) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 248, 251, 0.98) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.3);
   border-left: none;
   border-radius: 0 8px 8px 0;
   z-index: 900;
@@ -495,7 +498,7 @@ button {
   flex-direction: column;
   padding: 20px 10px;
   gap: 12px;
-  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .unit-menu.active {
@@ -515,7 +518,7 @@ button {
   width: 50px;
   height: 50px;
   border-radius: 4px;
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(212, 175, 55, 0.12);
   border: 1px solid rgba(212, 175, 55, 0.3);
   color: #d4af37;
   font-size: 22px;
@@ -529,9 +532,9 @@ button {
 }
 
 .unit-action:hover {
-  background: rgba(212, 175, 55, 0.2);
+  background: rgba(212, 175, 55, 0.22);
   border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
 }
 
 .unit-action:active {
@@ -584,18 +587,18 @@ button {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(77, 208, 225, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(212, 175, 55, 0.05) 100%);
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .chat-header-mini:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(77, 208, 225, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
   border-color: rgba(212, 175, 55, 0.5);
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
 }
 
 .chat-icon {
@@ -603,7 +606,7 @@ button {
 }
 
 .chat-title-mini {
-  color: #d4af37;
+  color: #8b7c3a;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -617,7 +620,7 @@ button {
   width: 24px;
   height: 24px;
   background: #d4af37;
-  color: #0f1f2e;
+  color: #ffffff;
   font-size: 11px;
   font-weight: 700;
   border-radius: 50%;
@@ -630,10 +633,10 @@ button {
   left: 20px;
   width: 600px;
   height: 400px;
-  background: linear-gradient(135deg, rgba(26, 43, 61, 0.97) 0%, rgba(15, 31, 46, 0.99) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(245, 248, 251, 0.98) 100%);
   border: 2px solid #d4af37;
   border-radius: 8px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 215, 0, 0.15);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 215, 0, 0.15);
   display: flex;
   flex-direction: column;
   opacity: 0;
@@ -657,12 +660,12 @@ button {
   align-items: center;
   padding: 14px 18px;
   background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   flex-shrink: 0;
 }
 
 .chat-title {
-  color: #d4af37;
+  color: #8b7c3a;
   font-size: 14px;
   font-weight: 700;
   margin: 0;
@@ -673,7 +676,7 @@ button {
 .chat-minimize-btn {
   background: transparent;
   border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  color: #8b7c3a;
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -687,7 +690,7 @@ button {
 }
 
 .chat-minimize-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(212, 175, 55, 0.15);
   border-color: #d4af37;
 }
 
@@ -704,8 +707,8 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.35);
-  border-right: 1px solid rgba(212, 175, 55, 0.25);
+  background: rgba(255, 255, 255, 0.3);
+  border-right: 1px solid rgba(212, 175, 55, 0.15);
 }
 
 .messages-container {
@@ -739,16 +742,16 @@ button {
   display: flex;
   gap: 6px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.1);
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(212, 175, 55, 0.05);
+  border-top: 1px solid rgba(212, 175, 55, 0.15);
   flex-shrink: 0;
 }
 
 .chat-input {
   flex: 1;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  color: #2c3e50;
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -761,11 +764,11 @@ button {
 
 .chat-input:focus {
   border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .chat-send-btn {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.2);
   border: 1px solid rgba(212, 175, 55, 0.3);
   color: #d4af37;
   width: 32px;
@@ -781,7 +784,7 @@ button {
 }
 
 .chat-send-btn:hover {
-  background: rgba(212, 175, 55, 0.25);
+  background: rgba(212, 175, 55, 0.3);
   border-color: #d4af37;
 }
 
@@ -794,14 +797,14 @@ button {
   width: 120px;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 .users-header {
   padding: 10px 12px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  color: #d4af37;
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.12) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+  color: #8b7c3a;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
