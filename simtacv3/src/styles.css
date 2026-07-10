@@ -485,7 +485,7 @@ button {
   top: 70px;
   width: 70px;
   height: auto;
-  background: linear-gradient(180deg, rgba(85, 107, 95, 0.95) 0%, rgba(74, 90, 82, 0.98) 100%);
+  background: linear-gradient(180deg, rgba(74, 90, 82, 0.95) 0%, rgba(64, 80, 72, 0.98) 100%);
   border: 1px solid rgba(212, 175, 55, 0.3);
   border-left: none;
   border-radius: 0 8px 8px 0;
@@ -498,7 +498,7 @@ button {
   flex-direction: column;
   padding: 20px 10px;
   gap: 12px;
-  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.3);
 }
 
 .unit-menu.active {
@@ -518,8 +518,8 @@ button {
   width: 50px;
   height: 50px;
   border-radius: 4px;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(160, 212, 232, 0.08) 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4);
   color: #d4af37;
   font-size: 22px;
   cursor: pointer;
@@ -532,13 +532,14 @@ button {
 }
 
 .unit-action:hover {
-  background: rgba(212, 175, 55, 0.22);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(160, 212, 232, 0.15) 100%);
   border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  transform: translateX(3px);
 }
 
 .unit-action:active {
-  transform: scale(0.9);
+  transform: scale(0.9) translateX(3px);
 }
 
 /* Tooltip */
@@ -549,15 +550,16 @@ button {
   top: 50%;
   transform: translateY(-50%);
   margin-left: 8px;
-  background: rgba(0, 0, 0, 0.9);
-  color: #d4af37;
+  background: rgba(0, 0, 0, 0.85);
+  color: #a0d4e8;
   padding: 6px 10px;
   border-radius: 4px;
   font-size: 11px;
   white-space: nowrap;
   z-index: 1000;
-  border: 1px solid rgba(212, 175, 55, 0.5);
+  border: 1px solid rgba(212, 175, 55, 0.6);
   pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 /* Chat Minimalista */
