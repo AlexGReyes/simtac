@@ -4,13 +4,83 @@
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.9.0/ol.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/ol@10.9.0/dist/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/milsymbol@3.0.4/dist/milsymbol.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tauri App</title>
+    <title>simtacv3</title>
     <script src="/main.js" defer></script>
   </head>
 
   <body>
+    <header class="top-menu">
+      <div class="user-section">
+        <div class="avatar">AG</div>
+        <div class="user-info">
+          <div class="username">Alejandro Reyes</div>
+          <div class="role">Operador Táctico</div>
+        </div>
+      </div>
+
+      <div class="system-section">
+        <div class="system-name">SIMTAC</div>
+        <div class="system-subtitle">Simulador Militar Táctico</div>
+      </div>
+
+      <div class="clocks-section">
+        <div class="clock">
+          <div class="clock-label">HORA LOCAL</div>
+          <div class="clock-time" id="local-time">00:00:00</div>
+          <div class="clock-date" id="local-date">--/--/----</div>
+        </div>
+        <div class="clock-divider"></div>
+        <div class="clock">
+          <div class="clock-label">UTC</div>
+          <div class="clock-time" id="utc-time">00:00:00</div>
+          <div class="clock-date" id="utc-date">--/--/----</div>
+        </div>
+      </div>
+    </header>
+
     <main id="map-container" class="map-container"></main>
+    <div id="coordinates-panel" class="coordinates-panel">
+      <div id="zoom-level">Zoom: --</div>
+      <div id="mouse-coordinates">Coordenadas: --, --</div>
+    </div>
+
+    <!-- Botón de Unidad Seleccionada -->
+    <button id="unit-panel-btn" class="unit-panel-btn">
+      <span class="btn-icon">⚔️</span>
+      <span class="btn-text">DETALLES</span>
+    </button>
+
+    <!-- Modal con Pestañas -->
+    <div id="unit-modal" class="unit-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Panel de Control</h2>
+        <button class="modal-close" id="modal-close-btn">✕</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="tab-btn active" data-tab="logistica">Logística</button>
+        <button class="tab-btn" data-tab="detalles">Detalles de Unidad</button>
+        <button class="tab-btn" data-tab="documentacion">Documentación</button>
+      </div>
+
+      <div class="modal-content">
+        <div class="tab-pane active" id="logistica">
+          <!-- Contenido de Logística -->
+        </div>
+        <div class="tab-pane" id="detalles">
+          <!-- Contenido de Detalles de Unidad -->
+        </div>
+        <div class="tab-pane" id="documentacion">
+          <!-- Contenido de Documentación -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay para cerrar modal -->
+    <div id="modal-overlay" class="modal-overlay"></div>
   </body>
 </html>
