@@ -283,17 +283,12 @@ function inicializarModalPanelUnidad() {
 
 // === GESTIÓN DEL MENÚ LATERAL DE UNIDAD ===
 function inicializarMenuUnidad() {
-  const unitMenuCloseBtn = document.getElementById('unit-menu-close');
   const unitActions = document.querySelectorAll('.unit-action');
-
-  // Cerrar menú
-  unitMenuCloseBtn.addEventListener('click', () => {
-    ocultarMenuUnidad();
-  });
 
   // Manejadores de acciones
   unitActions.forEach(action => {
-    action.addEventListener('click', () => {
+    action.addEventListener('click', (e) => {
+      e.stopPropagation();
       const actionType = action.getAttribute('data-action');
       manejarAccionUnidad(actionType);
     });
