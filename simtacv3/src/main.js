@@ -60,8 +60,23 @@ function logout() {
   location.reload();
 }
 
-// Hacer logout disponible globalmente
+// Hacer funciones disponibles globalmente
 window.logout = logout;
+
+// Función para inicializar app después de login
+window.inicializarAppAfterLogin = async function() {
+  console.log('✓ Inicializando aplicación después de login...');
+
+  // Conectar socket
+  conectarSocket();
+
+  // Esperar a que el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarApp);
+  } else {
+    inicializarApp();
+  }
+};
 
 // Función para actualizar los relojes
 function actualizarRelojes() {

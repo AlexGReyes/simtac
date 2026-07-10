@@ -54,6 +54,8 @@ const LoginUI = {
     try {
       await Auth.login(usuario, password);
       this.showApp();
+      // Llamar a inicializarApp después de mostrar el app
+      setTimeout(() => window.inicializarAppAfterLogin?.(), 100);
     } catch (error) {
       errorEl.textContent = error.message;
       loadingEl.style.display = 'none';
@@ -92,6 +94,8 @@ const LoginUI = {
       // Después de registrar, logear automáticamente
       await Auth.login(usuario, password);
       this.showApp();
+      // Llamar a inicializarApp después de mostrar el app
+      setTimeout(() => window.inicializarAppAfterLogin?.(), 100);
     } catch (error) {
       errorEl.textContent = error.message;
       loadingEl.style.display = 'none';
