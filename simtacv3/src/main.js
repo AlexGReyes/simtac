@@ -222,14 +222,12 @@ function configurarClickEnUnidades(map, vectorLayer) {
 
 function mostrarMenuUnidad(nombreUnidad, feature) {
   const unitMenu = document.getElementById('unit-menu');
-  const unitNameElement = document.getElementById('unit-name');
-
-  unitNameElement.textContent = nombreUnidad;
 
   // Guardar feature seleccionada en el estado global
   window.mapState.selectedFeature = feature;
 
   unitMenu.classList.add('active');
+  console.log(`Unidad seleccionada: ${nombreUnidad}`);
 }
 
 function ocultarMenuUnidad() {
