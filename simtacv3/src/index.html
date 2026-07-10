@@ -7,14 +7,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/ol@10.9.0/dist/ol.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/milsymbol@3.0.4/dist/milsymbol.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.5.4/dist/socket.io.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>simtacv3</title>
-    <script src="/main.js" defer></script>
+    <script type="module" src="/main.js" defer></script>
   </head>
 
   <body>
-    <header class="top-menu">
+    <!-- Pantalla de Login -->
+    <div id="login-screen" class="login-screen active">
+      <div class="login-container">
+        <div class="login-header">
+          <h1 class="login-title">SIMTAC</h1>
+          <p class="login-subtitle">Simulador Militar Táctico</p>
+        </div>
+
+        <div class="login-tabs">
+          <button class="login-tab-btn active" data-tab="signin">Ingresar</button>
+          <button class="login-tab-btn" data-tab="signup">Registrarse</button>
+        </div>
+
+        <!-- Pestaña de Ingreso -->
+        <form id="signin-form" class="login-form active" data-form="signin">
+          <div class="form-group">
+            <label for="signin-usuario">Usuario:</label>
+            <input type="text" id="signin-usuario" name="usuario" placeholder="Tu usuario" required />
+          </div>
+          <div class="form-group">
+            <label for="signin-password">Contraseña:</label>
+            <input type="password" id="signin-password" name="password" placeholder="Tu contraseña" required />
+          </div>
+          <button type="submit" class="login-btn">INGRESAR</button>
+          <div id="signin-error" class="login-error"></div>
+          <div id="signin-loading" class="login-loading" style="display: none;">Ingresando...</div>
+        </form>
+
+        <!-- Pestaña de Registro -->
+        <form id="signup-form" class="login-form" data-form="signup">
+          <div class="form-group">
+            <label for="signup-usuario">Usuario:</label>
+            <input type="text" id="signup-usuario" name="usuario" placeholder="Elige un usuario" required />
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Contraseña:</label>
+            <input type="password" id="signup-password" name="password" placeholder="Tu contraseña" required />
+          </div>
+          <div class="form-group">
+            <label for="signup-nombre">Nombre Completo:</label>
+            <input type="text" id="signup-nombre" name="nombre" placeholder="Tu nombre" required />
+          </div>
+          <div class="form-group">
+            <label for="signup-grado">Grado Militar (Opcional):</label>
+            <input type="text" id="signup-grado" name="grado" placeholder="Ej: Capitán, Teniente..." />
+          </div>
+          <button type="submit" class="login-btn">REGISTRARSE</button>
+          <div id="signup-error" class="login-error"></div>
+          <div id="signup-loading" class="login-loading" style="display: none;">Registrando...</div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Contenedor Principal (Oculto hasta autenticación) -->
+    <div id="app-container" class="app-container">
+      <header class="top-menu">
       <div class="user-section">
+        <button id="logout-btn" class="logout-btn" title="Cerrar sesión">🚪</button>
         <div class="avatar">AG</div>
         <div class="user-info">
           <div class="username">Alejandro Reyes</div>
@@ -84,7 +141,101 @@
           <!-- Contenido de Detalles de Unidad -->
         </div>
         <div class="tab-pane" id="documentacion">
-          <!-- Contenido de Documentación -->
+          <div class="docs-container">
+            <!-- Sidebar de Carpetas -->
+            <aside class="docs-sidebar">
+              <button class="docs-compose-btn" id="docs-compose-btn">
+                <span class="compose-icon">✎</span>
+                <span class="compose-text">Nuevo Documento</span>
+              </button>
+              <div class="docs-folders">
+                <button class="docs-folder-btn active" data-folder="inbox">
+                  <span class="folder-icon">📥</span>
+                  <span class="folder-name">Bandeja Entrada</span>
+                  <span class="folder-count" id="inbox-count">0</span>
+                </button>
+                <button class="docs-folder-btn" data-folder="outbox">
+                  <span class="folder-icon">📤</span>
+                  <span class="folder-name">Bandeja Salida</span>
+                  <span class="folder-count" id="outbox-count">0</span>
+                </button>
+              </div>
+            </aside>
+
+            <!-- Área Principal -->
+            <div class="docs-main">
+              <!-- Vista Lista de Documentos -->
+              <div id="docs-list-view" class="docs-view active">
+                <div class="docs-list-header">
+                  <h3 id="docs-list-title" class="list-title">Bandeja de Entrada</h3>
+                  <input type="text" class="docs-search" id="docs-search" placeholder="Buscar documentos...">
+                </div>
+                <div class="docs-list" id="docs-list">
+                  <!-- Los documentos irán aquí -->
+                </div>
+              </div>
+
+              <!-- Vista Detalle de Documento -->
+              <div id="docs-detail-view" class="docs-view">
+                <div class="docs-detail-header">
+                  <button class="docs-back-btn" id="docs-back-btn">← Volver</button>
+                  <div class="docs-detail-actions">
+                    <button class="docs-action-btn" id="docs-reply-btn" title="Responder">↩️</button>
+                    <button class="docs-action-btn" id="docs-delete-btn" title="Eliminar">🗑️</button>
+                  </div>
+                </div>
+                <div class="docs-detail-content">
+                  <div class="docs-detail-meta">
+                    <div class="detail-row">
+                      <span class="detail-label">De:</span>
+                      <span class="detail-value" id="detail-from">--</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Para:</span>
+                      <span class="detail-value" id="detail-to">--</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Asunto:</span>
+                      <span class="detail-value" id="detail-subject">--</span>
+                    </div>
+                    <div class="detail-row">
+                      <span class="detail-label">Fecha:</span>
+                      <span class="detail-value" id="detail-date">--</span>
+                    </div>
+                  </div>
+                  <div class="docs-detail-body" id="detail-body">
+                    <!-- Contenido del documento -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Vista Composición -->
+              <div id="docs-compose-view" class="docs-view">
+                <div class="docs-compose-header">
+                  <h3>Nuevo Documento</h3>
+                  <button class="docs-close-compose-btn" id="docs-close-compose-btn">✕</button>
+                </div>
+                <div class="docs-compose-form">
+                  <div class="form-group">
+                    <label for="compose-to">Para:</label>
+                    <input type="text" id="compose-to" placeholder="Destinatarios..." class="compose-input">
+                  </div>
+                  <div class="form-group">
+                    <label for="compose-subject">Asunto:</label>
+                    <input type="text" id="compose-subject" placeholder="Asunto del documento..." class="compose-input">
+                  </div>
+                  <div class="form-group">
+                    <label for="compose-body">Contenido:</label>
+                    <textarea id="compose-body" placeholder="Escribir contenido..." class="compose-textarea"></textarea>
+                  </div>
+                  <div class="form-actions">
+                    <button id="docs-send-btn" class="docs-send-btn">Enviar</button>
+                    <button id="docs-draft-btn" class="docs-draft-btn">Guardar como Borrador</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -136,6 +287,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
   </body>
 </html>

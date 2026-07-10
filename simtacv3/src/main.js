@@ -1,3 +1,8 @@
+// Importar módulos
+import Session from './session.js';
+import Auth from './auth.js';
+import LoginUI from './login-ui.js';
+
 // Variables globales
 window.mapState = {
   currentZoom: 14,
@@ -5,12 +10,64 @@ window.mapState = {
   ratio: window.devicePixelRatio || 1,
 };
 
+// Socket.IO instance
+let socket = null;
+
+// Función para conectar socket después de autenticación
+function conectarSocket() {
+  const token = Session.getToken();
+  if (!token) return;
+
+  socket = io('http://node.localhost', {
+    auth: { token },
+  });
+
+  socket.on('connect', () => {
+    console.log('✓ Conectado al servidor (Socket.IO)');
+  });
+
+  socket.on('connect_error', (err) => {
+    console.error('✗ Error de conexión Socket:', err.message);
+    if (err.message === 'Token inválido o expirado') {
+      logout();
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('✓ Desconectado del servidor');
+  });
+
+  // Listeners para chat y documentos
+  socket.on('chat:message', (msg) => {
+    console.log('Nuevo mensaje:', msg);
+    // Aquí se agregará lógica de actualización de UI
+  });
+
+  socket.on('documento:nuevo', (doc) => {
+    console.log('Nuevo documento:', doc);
+    // Aquí se agregará lógica de actualización de UI
+  });
+}
+
+// Función para desloguear
+function logout() {
+  if (socket) {
+    socket.disconnect();
+  }
+  Session.clear();
+  LoginUI.hideApp();
+  LoginUI.showLogin();
+  location.reload();
+}
+
+// Hacer logout disponible globalmente
+window.logout = logout;
+
 // Función para actualizar los relojes
 function actualizarRelojes() {
   const ahora = new Date();
   const utcTime = new Date(ahora.getTime() + ahora.getTimezoneOffset() * 60000);
 
-  // Hora local
   const localTimeStr = ahora.toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
@@ -23,7 +80,6 @@ function actualizarRelojes() {
     year: 'numeric',
   });
 
-  // Hora UTC
   const utcTimeStr = utcTime.toLocaleTimeString('es-ES', {
     hour: '2-digit',
     minute: '2-digit',
@@ -36,18 +92,83 @@ function actualizarRelojes() {
     year: 'numeric',
   });
 
-  document.getElementById('local-time').textContent = localTimeStr;
-  document.getElementById('local-date').textContent = localDateStr;
-  document.getElementById('utc-time').textContent = utcTimeStr;
-  document.getElementById('utc-date').textContent = utcDateStr;
+  const localTimeEl = document.getElementById('local-time');
+  const localDateEl = document.getElementById('local-date');
+  const utcTimeEl = document.getElementById('utc-time');
+  const utcDateEl = document.getElementById('utc-date');
+
+  if (localTimeEl) localTimeEl.textContent = localTimeStr;
+  if (localDateEl) localDateEl.textContent = localDateStr;
+  if (utcTimeEl) utcTimeEl.textContent = utcTimeStr;
+  if (utcDateEl) utcDateEl.textContent = utcDateStr;
 }
 
-window.addEventListener("DOMContentLoaded", async () => {
-  console.log("=== INICIANDO APLICACIÓN ===");
-  console.log("window.__TAURI__ disponible:", !!window.__TAURI__);
-  console.log("milsymbol (ms) disponible:", typeof ms !== "undefined");
-  console.log("OpenLayers (ol) disponible:", typeof ol !== "undefined");
+// Función para actualizar información del usuario en header
+function actualizarUserSection() {
+  const user = Session.getUser();
+  if (!user) return;
 
+  const avatarEl = document.querySelector('.avatar');
+  const usernameEl = document.querySelector('.username');
+  const roleEl = document.querySelector('.role');
+
+  if (avatarEl) {
+    const initials = user.nombre
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+    avatarEl.textContent = initials;
+  }
+
+  if (usernameEl) usernameEl.textContent = user.nombre;
+  if (roleEl) roleEl.textContent = user.grado || 'Operador';
+}
+
+// Inicialización principal
+async function inicializar() {
+  console.log('=== INICIANDO SIMTAC ===');
+
+  // Verificar si hay sesión activa
+  if (!Session.isAuthenticated()) {
+    console.log('✓ Sin sesión - Mostrando login');
+    await LoginUI.init();
+    return;
+  }
+
+  console.log('✓ Sesión activa - Inicializando aplicación');
+
+  // Mostrar app y ocultar login
+  LoginUI.showApp();
+
+  // Conectar socket
+  conectarSocket();
+
+  // Esperar a que el DOM esté listo
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarApp);
+  } else {
+    inicializarApp();
+  }
+}
+
+async function inicializarApp() {
+  console.log('=== INICIALIZANDO COMPONENTES DE LA APP ===');
+  console.log('window.__TAURI__ disponible:', !!window.__TAURI__);
+  console.log('milsymbol (ms) disponible:', typeof ms !== 'undefined');
+  console.log('OpenLayers (ol) disponible:', typeof ol !== 'undefined');
+
+  // Actualizar información del usuario
+  actualizarUserSection();
+
+  // Configurar botón de logout
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', logout);
+  }
+
+  // Crear mapa
   const map = new ol.Map({
     target: 'map-container',
     layers: [
@@ -61,7 +182,7 @@ window.addEventListener("DOMContentLoaded", async () => {
     }),
   });
 
-  console.log("Mapa creado exitosamente");
+  console.log('✓ Mapa creado exitosamente');
 
   // Actualizar relojes inmediatamente y cada segundo
   actualizarRelojes();
@@ -70,32 +191,30 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Configurar listeners del mapa
   configurarListenersMapa(map);
 
-  // Inicializar modal de panel de unidad
+  // Inicializar componentes
   inicializarModalPanelUnidad();
-
-  // Inicializar menú lateral de unidad
   inicializarMenuUnidad();
-
-  // Inicializar chat
   inicializarChat();
+  inicializarDocumentos();
 
+  // Cargar unidades
   await cargarUnidades(map);
-});
+}
+
+// ===== FUNCIONES EXISTENTES (adaptar para nueva estructura) =====
 
 function configurarListenersMapa(map) {
   const view = map.getView();
-  const zoomElement = document.getElementById("zoom-level");
-  const coordinatesElement = document.getElementById("mouse-coordinates");
+  const zoomElement = document.getElementById('zoom-level');
+  const coordinatesElement = document.getElementById('mouse-coordinates');
 
-  // Listener para cambios de zoom
-  view.on("change:resolution", () => {
+  view.on('change:resolution', () => {
     const zoom = view.getZoom();
     window.mapState.currentZoom = zoom;
-    zoomElement.textContent = `Zoom: ${zoom.toFixed(2)}`;
+    if (zoomElement) zoomElement.textContent = `Zoom: ${zoom.toFixed(2)}`;
   });
 
-  // Listener para movimiento del mouse en el mapa
-  map.on("pointermove", (evt) => {
+  map.on('pointermove', (evt) => {
     const coordinate = map.getEventCoordinate(evt.originalEvent);
     const lonLat = ol.proj.toLonLat(coordinate);
 
@@ -106,35 +225,38 @@ function configurarListenersMapa(map) {
       y: coordinate[1],
     };
 
-    coordinatesElement.textContent = `Coordenadas: ${lonLat[0].toFixed(4)}°, ${lonLat[1].toFixed(4)}°`;
+    if (coordinatesElement) {
+      coordinatesElement.textContent = `Coordenadas: ${lonLat[0].toFixed(4)}°, ${lonLat[1].toFixed(4)}°`;
+    }
   });
 
-  // Inicializar zoom en el panel
-  zoomElement.textContent = `Zoom: ${view.getZoom().toFixed(2)}`;
+  if (zoomElement) {
+    zoomElement.textContent = `Zoom: ${view.getZoom().toFixed(2)}`;
+  }
 
-  console.log("Listeners del mapa configurados");
+  console.log('✓ Listeners del mapa configurados');
 }
 
 async function cargarUnidades(map) {
   try {
-    console.log("1. Iniciando carga de unidades...");
-    console.log("2. Verificando window.__TAURI__:", typeof window.__TAURI__);
+    console.log('1. Iniciando carga de unidades...');
+    console.log('2. Verificando window.__TAURI__:', typeof window.__TAURI__);
 
     const { invoke } = window.__TAURI__.core;
-    console.log("3. Función invoke disponible:", typeof invoke);
+    console.log('3. Función invoke disponible:', typeof invoke);
 
-    const estado = await invoke("cargar_estado_actual");
-    console.log("4. Estado cargado desde Rust:", estado);
+    const estado = await invoke('cargar_estado_actual');
+    console.log('4. Estado cargado desde Rust:', estado);
 
     const todasLasUnidades = [
       ...estado.unidadesRojas,
       ...estado.unidadesAzules,
       ...estado.unidadesNeutrales,
     ];
-    console.log("5. Total de unidades:", todasLasUnidades.length);
+    console.log('5. Total de unidades:', todasLasUnidades.length);
 
     const vectorSource = new ol.source.Vector();
-    console.log("6. Vector source creado");
+    console.log('6. Vector source creado');
 
     todasLasUnidades.forEach((unidad, index) => {
       console.log(`   Procesando unidad ${index + 1}:`, unidad);
@@ -158,7 +280,6 @@ async function cargarUnidades(map) {
           defensa: unidad.defensa,
         });
 
-
         const canvas = simbolo.asCanvas();
 
         const style = new ol.style.Style({
@@ -172,8 +293,6 @@ async function cargarUnidades(map) {
           }),
         });
 
-
-
         feature.setStyle(style);
         vectorSource.addFeature(feature);
         console.log(`   - Feature agregado al vector source`);
@@ -184,18 +303,17 @@ async function cargarUnidades(map) {
 
     const vectorLayer = new ol.layer.Vector({
       source: vectorSource,
-      title: "Unidades Militares",
+      title: 'Unidades Militares',
     });
 
     map.addLayer(vectorLayer);
-    console.log("7. Capa de vector agregada al mapa");
+    console.log('7. Capa de vector agregada al mapa');
     console.log(`✓ Cargadas ${todasLasUnidades.length} unidades en el mapa`);
 
-    // Agregar evento de click en los símbolos
     configurarClickEnUnidades(map, vectorLayer);
   } catch (error) {
-    console.error("✗ Error al cargar unidades:", error);
-    console.error("   Stack:", error.stack);
+    console.error('✗ Error al cargar unidades:', error);
+    console.error('   Stack:', error.stack);
   }
 }
 
@@ -208,13 +326,12 @@ function configurarClickEnUnidades(map, vectorLayer) {
     if (feature && vectorLayer.getSource().getFeatures().includes(feature)) {
       const unidadNombre = feature.get('nombre');
       mostrarMenuUnidad(unidadNombre, feature);
-      console.log("Unidad seleccionada:", unidadNombre);
+      console.log('Unidad seleccionada:', unidadNombre);
     } else {
       ocultarMenuUnidad();
     }
   });
 
-  // Cambiar cursor al pasar sobre unidades
   map.on('pointermove', (evt) => {
     const hasFeature = map.forEachFeatureAtPixel(evt.pixel, (feature) => {
       return vectorLayer.getSource().getFeatures().includes(feature);
@@ -225,68 +342,61 @@ function configurarClickEnUnidades(map, vectorLayer) {
 
 function mostrarMenuUnidad(nombreUnidad, feature) {
   const unitMenu = document.getElementById('unit-menu');
-
-  // Guardar feature seleccionada en el estado global
   window.mapState.selectedFeature = feature;
-
-  unitMenu.classList.add('active');
+  if (unitMenu) unitMenu.classList.add('active');
   console.log(`Unidad seleccionada: ${nombreUnidad}`);
 }
 
 function ocultarMenuUnidad() {
   const unitMenu = document.getElementById('unit-menu');
-  unitMenu.classList.remove('active');
+  if (unitMenu) unitMenu.classList.remove('active');
   window.mapState.selectedFeature = null;
 }
 
-// === GESTIÓN DEL MODAL DE PANEL DE UNIDAD ===
 function inicializarModalPanelUnidad() {
   const unitPanelBtn = document.getElementById('unit-panel-btn');
   const unitModal = document.getElementById('unit-modal');
   const modalOverlay = document.getElementById('modal-overlay');
   const modalCloseBtn = document.getElementById('modal-close-btn');
   const tabBtns = document.querySelectorAll('.tab-btn');
+  const coordinatesPanel = document.getElementById('coordinates-panel');
 
-  // Abrir modal
+  if (!unitPanelBtn) return;
+
   unitPanelBtn.addEventListener('click', () => {
-    unitModal.classList.add('active');
-    modalOverlay.classList.add('active');
+    if (unitModal) unitModal.classList.add('active');
+    if (modalOverlay) modalOverlay.classList.add('active');
+    if (coordinatesPanel) coordinatesPanel.style.display = 'none';
   });
 
-  // Cerrar modal
   function cerrarModal() {
-    unitModal.classList.remove('active');
-    modalOverlay.classList.remove('active');
+    if (unitModal) unitModal.classList.remove('active');
+    if (modalOverlay) modalOverlay.classList.remove('active');
+    if (coordinatesPanel) coordinatesPanel.style.display = 'block';
   }
 
-  modalCloseBtn.addEventListener('click', cerrarModal);
-  modalOverlay.addEventListener('click', cerrarModal);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', cerrarModal);
+  if (modalOverlay) modalOverlay.addEventListener('click', cerrarModal);
 
-  // Cambiar de pestaña
   tabBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const tabName = btn.getAttribute('data-tab');
-
-      // Remover clase activa de todos los botones y pestañas
       tabBtns.forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-pane').forEach(pane => {
         pane.classList.remove('active');
       });
-
-      // Agregar clase activa al botón clickeado y su pestaña
       btn.classList.add('active');
-      document.getElementById(tabName).classList.add('active');
+      const pane = document.getElementById(tabName);
+      if (pane) pane.classList.add('active');
     });
   });
 
-  console.log("Modal de panel de unidad inicializado");
+  console.log('✓ Modal de panel de unidad inicializado');
 }
 
-// === GESTIÓN DEL MENÚ LATERAL DE UNIDAD ===
 function inicializarMenuUnidad() {
   const unitActions = document.querySelectorAll('.unit-action');
 
-  // Manejadores de acciones
   unitActions.forEach(action => {
     action.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -295,27 +405,28 @@ function inicializarMenuUnidad() {
     });
   });
 
-  console.log("Menú lateral de unidad inicializado");
+  console.log('✓ Menú lateral de unidad inicializado');
 }
 
-// === GESTIÓN DEL CHAT ===
 function inicializarChat() {
   const chatMinimized = document.getElementById('chat-minimized');
   const chatExpanded = document.getElementById('chat-expanded');
   const chatMinimizeBtn = document.getElementById('chat-minimize-btn');
 
-  // Expandir chat
-  chatMinimized.addEventListener('click', () => {
-    chatExpanded.classList.add('active');
-  });
+  if (chatMinimized) {
+    chatMinimized.addEventListener('click', () => {
+      if (chatExpanded) chatExpanded.classList.add('active');
+    });
+  }
 
-  // Contraer chat
-  chatMinimizeBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    chatExpanded.classList.remove('active');
-  });
+  if (chatMinimizeBtn) {
+    chatMinimizeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (chatExpanded) chatExpanded.classList.remove('active');
+    });
+  }
 
-  console.log("Chat inicializado");
+  console.log('✓ Chat inicializado');
 }
 
 function manejarAccionUnidad(actionType) {
@@ -339,3 +450,250 @@ function manejarAccionUnidad(actionType) {
       break;
   }
 }
+
+class DocumentosManager {
+  constructor() {
+    this.inbox = [
+      {
+        id: 1,
+        from: 'General Rodríguez',
+        to: 'Operadores',
+        subject: 'Orden de Operación 001',
+        date: '2025-12-15 09:30',
+        body: 'Se inicia operación táctica en sector norte. Todas las unidades deben estar en posición de alerta máxima. Coordinar movimientos a través del canal táctico.',
+        preview: 'Se inicia operación táctica en sector norte...'
+      },
+    ];
+
+    this.outbox = [];
+    this.currentFolder = 'inbox';
+    this.currentView = 'list';
+    this.selectedDoc = null;
+    this.searchTerm = '';
+  }
+
+  getDocuments() {
+    const docs = this.currentFolder === 'inbox' ? this.inbox : this.outbox;
+    return this.searchTerm
+      ? docs.filter(doc =>
+          doc.subject.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          doc.from.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
+          doc.body.toLowerCase().includes(this.searchTerm.toLowerCase())
+        )
+      : docs;
+  }
+
+  switchFolder(folder) {
+    this.currentFolder = folder;
+    this.searchTerm = '';
+    this.renderList();
+  }
+
+  showComposeView() {
+    this.currentView = 'compose';
+    this.renderViews();
+  }
+
+  showListView() {
+    this.currentView = 'list';
+    this.selectedDoc = null;
+    this.renderViews();
+    this.renderList();
+  }
+
+  showDetailView(docId) {
+    const docs = this.getDocuments();
+    this.selectedDoc = docs.find(d => d.id === docId);
+    this.currentView = 'detail';
+    this.renderViews();
+    this.renderDetail();
+  }
+
+  sendDocument(to, subject, body) {
+    if (!to || !subject || !body) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+
+    const newDoc = {
+      id: Math.max(...this.outbox.map(d => d.id), 0) + 1,
+      from: 'Yo',
+      to,
+      subject,
+      date: new Date().toLocaleString('es-ES'),
+      body,
+      preview: body.substring(0, 50) + '...'
+    };
+
+    this.outbox.unshift(newDoc);
+    this.switchFolder('outbox');
+    alert('Documento enviado exitosamente');
+  }
+
+  renderList() {
+    const docs = this.getDocuments();
+    const listContainer = document.getElementById('docs-list');
+    const listTitle = document.getElementById('docs-list-title');
+
+    if (!listContainer) return;
+
+    listTitle.textContent = this.currentFolder === 'inbox'
+      ? 'Bandeja de Entrada'
+      : 'Bandeja de Salida';
+
+    listContainer.innerHTML = docs.length === 0
+      ? '<div style="padding: 20px; text-align: center; color: rgba(232, 232, 232, 0.5); font-size: 12px;">Sin documentos</div>'
+      : docs.map(doc => `
+        <button class="docs-item" onclick="docsManager.showDetailView(${doc.id})">
+          <div class="docs-item-header">
+            <span class="docs-item-sender">${doc.from}</span>
+            <span class="docs-item-date">${doc.date}</span>
+          </div>
+          <div class="docs-item-subject">${doc.subject}</div>
+          <div class="docs-item-preview">${doc.preview}</div>
+        </button>
+      `).join('');
+
+    this.updateFolderCounts();
+  }
+
+  renderDetail() {
+    if (!this.selectedDoc) return;
+
+    document.getElementById('detail-from').textContent = this.selectedDoc.from;
+    document.getElementById('detail-to').textContent = this.selectedDoc.to;
+    document.getElementById('detail-subject').textContent = this.selectedDoc.subject;
+    document.getElementById('detail-date').textContent = this.selectedDoc.date;
+    document.getElementById('detail-body').textContent = this.selectedDoc.body;
+  }
+
+  renderViews() {
+    const views = document.querySelectorAll('.docs-view');
+    views.forEach(v => v.classList.remove('active'));
+
+    if (this.currentView === 'list') {
+      const listView = document.getElementById('docs-list-view');
+      if (listView) listView.classList.add('active');
+    } else if (this.currentView === 'detail') {
+      const detailView = document.getElementById('docs-detail-view');
+      if (detailView) detailView.classList.add('active');
+    } else if (this.currentView === 'compose') {
+      const composeView = document.getElementById('docs-compose-view');
+      if (composeView) composeView.classList.add('active');
+      document.getElementById('compose-to').focus();
+    }
+  }
+
+  updateFolderCounts() {
+    const inboxCount = document.getElementById('inbox-count');
+    const outboxCount = document.getElementById('outbox-count');
+    if (inboxCount) inboxCount.textContent = this.inbox.length;
+    if (outboxCount) outboxCount.textContent = this.outbox.length;
+  }
+}
+
+function inicializarDocumentos() {
+  window.docsManager = new DocumentosManager();
+
+  window.docsManager.updateFolderCounts();
+  window.docsManager.renderList();
+
+  document.querySelectorAll('.docs-folder-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.docs-folder-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      window.docsManager.switchFolder(btn.getAttribute('data-folder'));
+    });
+  });
+
+  const composeBtn = document.getElementById('docs-compose-btn');
+  if (composeBtn) {
+    composeBtn.addEventListener('click', () => {
+      window.docsManager.showComposeView();
+    });
+  }
+
+  const backBtn = document.getElementById('docs-back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.docsManager.showListView();
+    });
+  }
+
+  const closeComposeBtn = document.getElementById('docs-close-compose-btn');
+  if (closeComposeBtn) {
+    closeComposeBtn.addEventListener('click', () => {
+      window.docsManager.showListView();
+    });
+  }
+
+  const searchInput = document.getElementById('docs-search');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      window.docsManager.searchTerm = e.target.value;
+      window.docsManager.renderList();
+    });
+  }
+
+  const sendBtn = document.getElementById('docs-send-btn');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', () => {
+      const to = document.getElementById('compose-to').value;
+      const subject = document.getElementById('compose-subject').value;
+      const body = document.getElementById('compose-body').value;
+
+      window.docsManager.sendDocument(to, subject, body);
+
+      document.getElementById('compose-to').value = '';
+      document.getElementById('compose-subject').value = '';
+      document.getElementById('compose-body').value = '';
+    });
+  }
+
+  const draftBtn = document.getElementById('docs-draft-btn');
+  if (draftBtn) {
+    draftBtn.addEventListener('click', () => {
+      alert('Documento guardado como borrador');
+      document.getElementById('compose-to').value = '';
+      document.getElementById('compose-subject').value = '';
+      document.getElementById('compose-body').value = '';
+      window.docsManager.showListView();
+    });
+  }
+
+  const replyBtn = document.getElementById('docs-reply-btn');
+  if (replyBtn) {
+    replyBtn.addEventListener('click', () => {
+      if (window.docsManager.selectedDoc) {
+        document.getElementById('compose-to').value = window.docsManager.selectedDoc.from;
+        document.getElementById('compose-subject').value =
+          'RE: ' + window.docsManager.selectedDoc.subject;
+        document.getElementById('compose-body').value =
+          '\n\n--- Mensaje Original ---\n' +
+          window.docsManager.selectedDoc.body;
+        window.docsManager.showComposeView();
+      }
+    });
+  }
+
+  const deleteBtn = document.getElementById('docs-delete-btn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', () => {
+      if (confirm('¿Eliminar este documento?')) {
+        const docs = window.docsManager.currentFolder === 'inbox'
+          ? window.docsManager.inbox
+          : window.docsManager.outbox;
+        const idx = docs.findIndex(d => d.id === window.docsManager.selectedDoc.id);
+        if (idx > -1) {
+          docs.splice(idx, 1);
+          window.docsManager.showListView();
+        }
+      }
+    });
+  }
+
+  console.log('✓ Sistema de documentación inicializado');
+}
+
+// Iniciar la aplicación
+inicializar();
