@@ -91,5 +91,51 @@
 
     <!-- Overlay para cerrar modal -->
     <div id="modal-overlay" class="modal-overlay"></div>
+
+    <!-- Chat Minimalista -->
+    <div id="chat-container" class="chat-container">
+      <!-- Chat Colapsado -->
+      <div id="chat-minimized" class="chat-minimized">
+        <div class="chat-header-mini">
+          <span class="chat-icon">💬</span>
+          <span class="chat-title-mini">CHAT</span>
+          <span class="chat-badge">0</span>
+        </div>
+      </div>
+
+      <!-- Chat Expandido -->
+      <div id="chat-expanded" class="chat-expanded">
+        <div class="chat-header">
+          <h3 class="chat-title">CHAT TÁCTICO</h3>
+          <button id="chat-minimize-btn" class="chat-minimize-btn">−</button>
+        </div>
+
+        <div class="chat-content">
+          <!-- Panel de Mensajes -->
+          <div class="chat-messages-panel">
+            <div class="messages-container">
+              <!-- Los mensajes irán aquí -->
+            </div>
+            <div class="chat-input-area">
+              <input
+                type="text"
+                class="chat-input"
+                placeholder="Escribir mensaje..."
+                readonly
+              />
+              <button class="chat-send-btn">→</button>
+            </div>
+          </div>
+
+          <!-- Panel de Usuarios -->
+          <div class="chat-users-panel">
+            <div class="users-header">USUARIOS</div>
+            <div class="users-container">
+              <!-- Los usuarios irán aquí -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

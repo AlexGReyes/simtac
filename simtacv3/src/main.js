@@ -76,6 +76,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Inicializar menú lateral de unidad
   inicializarMenuUnidad();
 
+  // Inicializar chat
+  inicializarChat();
+
   await cargarUnidades(map);
 });
 
@@ -293,6 +296,26 @@ function inicializarMenuUnidad() {
   });
 
   console.log("Menú lateral de unidad inicializado");
+}
+
+// === GESTIÓN DEL CHAT ===
+function inicializarChat() {
+  const chatMinimized = document.getElementById('chat-minimized');
+  const chatExpanded = document.getElementById('chat-expanded');
+  const chatMinimizeBtn = document.getElementById('chat-minimize-btn');
+
+  // Expandir chat
+  chatMinimized.addEventListener('click', () => {
+    chatExpanded.classList.add('active');
+  });
+
+  // Contraer chat
+  chatMinimizeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    chatExpanded.classList.remove('active');
+  });
+
+  console.log("Chat inicializado");
 }
 
 function manejarAccionUnidad(actionType) {
