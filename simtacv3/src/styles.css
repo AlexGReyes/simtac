@@ -663,19 +663,21 @@ button {
 /* Contenido del Modal */
 .modal-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px;
+  overflow: hidden;
+  padding: 0;
   color: #e8e8e8;
   background: rgba(0, 0, 0, 0.2);
 }
 
 .tab-pane {
   display: none;
-  min-height: 200px;
+  height: 100%;
+  overflow: hidden;
 }
 
 .tab-pane.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.3s ease;
 }
 
@@ -1065,8 +1067,11 @@ button {
 .docs-container {
   display: flex;
   height: 100%;
+  width: 100%;
   gap: 0;
   background: rgba(0, 0, 0, 0.2);
+  flex: 1;
+  overflow: hidden;
 }
 
 /* Sidebar de Carpetas */
@@ -1181,11 +1186,15 @@ button {
   flex-direction: column;
   overflow: hidden;
   background: rgba(0, 0, 0, 0.15);
+  width: 100%;
+  height: 100%;
 }
 
 .docs-view {
   display: none;
   height: 100%;
+  width: 100%;
+  flex: 1;
   flex-direction: column;
   overflow: hidden;
 }
