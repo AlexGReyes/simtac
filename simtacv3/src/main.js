@@ -73,6 +73,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   // Inicializar modal de panel de unidad
   inicializarModalPanelUnidad();
 
+  // Inicializar menú lateral de unidad
+  inicializarMenuUnidad();
+
   await cargarUnidades(map);
 });
 
@@ -184,10 +187,55 @@ async function cargarUnidades(map) {
     map.addLayer(vectorLayer);
     console.log("7. Capa de vector agregada al mapa");
     console.log(`✓ Cargadas ${todasLasUnidades.length} unidades en el mapa`);
+
+    // Agregar evento de click en los símbolos
+    configurarClickEnUnidades(map, vectorLayer);
   } catch (error) {
     console.error("✗ Error al cargar unidades:", error);
     console.error("   Stack:", error.stack);
   }
+}
+
+function configurarClickEnUnidades(map, vectorLayer) {
+  map.on('click', (evt) => {
+    const feature = map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+      return feature;
+    });
+
+    if (feature && vectorLayer.getSource().getFeatures().includes(feature)) {
+      const unidadNombre = feature.get('nombre');
+      mostrarMenuUnidad(unidadNombre, feature);
+      console.log("Unidad seleccionada:", unidadNombre);
+    } else {
+      ocultarMenuUnidad();
+    }
+  });
+
+  // Cambiar cursor al pasar sobre unidades
+  map.on('pointermove', (evt) => {
+    const hasFeature = map.forEachFeatureAtPixel(evt.pixel, (feature) => {
+      return vectorLayer.getSource().getFeatures().includes(feature);
+    });
+    map.getViewport().style.cursor = hasFeature ? 'pointer' : '';
+  });
+}
+
+function mostrarMenuUnidad(nombreUnidad, feature) {
+  const unitMenu = document.getElementById('unit-menu');
+  const unitNameElement = document.getElementById('unit-name');
+
+  unitNameElement.textContent = nombreUnidad;
+
+  // Guardar feature seleccionada en el estado global
+  window.mapState.selectedFeature = feature;
+
+  unitMenu.classList.add('active');
+}
+
+function ocultarMenuUnidad() {
+  const unitMenu = document.getElementById('unit-menu');
+  unitMenu.classList.remove('active');
+  window.mapState.selectedFeature = null;
 }
 
 // === GESTIÓN DEL MODAL DE PANEL DE UNIDAD ===
@@ -231,4 +279,47 @@ function inicializarModalPanelUnidad() {
   });
 
   console.log("Modal de panel de unidad inicializado");
+}
+
+// === GESTIÓN DEL MENÚ LATERAL DE UNIDAD ===
+function inicializarMenuUnidad() {
+  const unitMenuCloseBtn = document.getElementById('unit-menu-close');
+  const unitActions = document.querySelectorAll('.unit-action');
+
+  // Cerrar menú
+  unitMenuCloseBtn.addEventListener('click', () => {
+    ocultarMenuUnidad();
+  });
+
+  // Manejadores de acciones
+  unitActions.forEach(action => {
+    action.addEventListener('click', () => {
+      const actionType = action.getAttribute('data-action');
+      manejarAccionUnidad(actionType);
+    });
+  });
+
+  console.log("Menú lateral de unidad inicializado");
+}
+
+function manejarAccionUnidad(actionType) {
+  const feature = window.mapState.selectedFeature;
+  if (!feature) return;
+
+  const unidadNombre = feature.get('nombre');
+
+  switch(actionType) {
+    case 'movement':
+      console.log(`Movimiento Terrestre para: ${unidadNombre}`);
+      alert(`Modo Movimiento Terrestre activado para ${unidadNombre}`);
+      break;
+    case 'mission':
+      console.log(`Misión Especial para: ${unidadNombre}`);
+      alert(`Modo Misión Especial activado para ${unidadNombre}`);
+      break;
+    case 'details':
+      console.log(`Mostrar Detalles de: ${unidadNombre}`);
+      alert(`Detalles de ${unidadNombre}: Personal ${feature.get('personal')}, Ataque ${feature.get('ataque')}, Defensa ${feature.get('defensa')}`);
+      break;
+  }
 }
