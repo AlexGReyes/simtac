@@ -285,6 +285,7 @@ class AdminManager {
           <td>${u.nombre}</td>
           <td>${u.tipo || '-'}</td>
           <td>${u.country || '-'}</td>
+          <td style="text-align: center; font-weight: 600;">${u.quantity || '-'}</td>
           <td><small>${fechaCreacion}</small></td>
           <td>
             <button class="admin-edit-btn" onclick="adminManager.openForm('unidades-base', '${u.id}')">Editar</button>
@@ -321,7 +322,6 @@ class AdminManager {
         <td>${u.nombre}</td>
         <td><code>${u.sidc}</code></td>
         <td>${u.tipo || '-'}</td>
-        <td style="text-align: center; font-weight: 600;">${u.quantity || '-'}</td>
         <td>${u.pos_x ? u.pos_x.toFixed(2) : '-'}</td>
         <td>${u.pos_y ? u.pos_y.toFixed(2) : '-'}</td>
         <td>
@@ -564,6 +564,10 @@ class AdminManager {
             <input type="text" name="country" value="${record?.country || ''}" placeholder="Ej: CL, AR, PE">
           </div>
           <div class="admin-form-group">
+            <label>Cantidad por Defecto (Efectivos)</label>
+            <input type="number" name="quantity" value="${record?.quantity || ''}" min="0" placeholder="Ej: 45, 120 (enteros positivos)">
+          </div>
+          <div class="admin-form-group">
             <label>Descripción</label>
             <textarea name="descripcion" style="min-height: 80px;" placeholder="Descripción detallada de la plantilla...">${record?.descripcion || ''}</textarea>
           </div>
@@ -605,10 +609,6 @@ class AdminManager {
           <div class="admin-form-group">
             <label>Posición Y (Latitud)</label>
             <input type="number" name="pos_y" value="${record?.pos_y || ''}" step="0.0001" placeholder="42.3601">
-          </div>
-          <div class="admin-form-group">
-            <label>Cantidad/Efectivos</label>
-            <input type="number" name="quantity" value="${record?.quantity || ''}" min="0" placeholder="Ej: 45, 120">
           </div>
         </div>
         <fieldset style="border: 1px solid rgba(212,175,55,0.3); padding: 12px; border-radius: 4px; margin-top: 12px;">
