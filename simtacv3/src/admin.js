@@ -368,6 +368,30 @@ class AdminManager {
 
   async loadAsignaciones() {
     try {
+      const token = Session.getToken();
+
+      // Cargar usuarios si no están cargados
+      if (!this.data.usuarios || this.data.usuarios.length === 0) {
+        const usuariosResponse = await fetch(`${API_BASE}/usuarios`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (usuariosResponse.ok) {
+          this.data.usuarios = await usuariosResponse.json();
+        }
+      }
+
+      // Cargar unidades si no están cargadas
+      if (!this.data.unidades || this.data.unidades.length === 0) {
+        const unidadesResponse = await fetch(`${API_BASE}/unidades`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (unidadesResponse.ok) {
+          this.data.unidades = await unidadesResponse.json();
+        }
+      }
+
+      // Las asignaciones se construyen dinámicamente desde usuarios y unidades
+      // Por ahora, mostrar tabla vacía (no hay endpoint GET /asignaciones en API)
       this.data.asignaciones = [];
       this.renderAsignacionesTable([]);
     } catch (error) {
