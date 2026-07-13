@@ -319,8 +319,9 @@ class AdminManager {
       <tr>
         <td>${u.id}</td>
         <td>${u.nombre}</td>
-        <td>${u.sidc}</td>
+        <td><code>${u.sidc}</code></td>
         <td>${u.tipo || '-'}</td>
+        <td style="text-align: center; font-weight: 600;">${u.quantity || '-'}</td>
         <td>${u.pos_x ? u.pos_x.toFixed(2) : '-'}</td>
         <td>${u.pos_y ? u.pos_y.toFixed(2) : '-'}</td>
         <td>
@@ -605,16 +606,16 @@ class AdminManager {
             <label>Posición Y (Latitud)</label>
             <input type="number" name="pos_y" value="${record?.pos_y || ''}" step="0.0001" placeholder="42.3601">
           </div>
+          <div class="admin-form-group">
+            <label>Cantidad/Efectivos</label>
+            <input type="number" name="quantity" value="${record?.quantity || ''}" min="0" placeholder="Ej: 45, 120">
+          </div>
         </div>
         <fieldset style="border: 1px solid rgba(212,175,55,0.3); padding: 12px; border-radius: 4px; margin-top: 12px;">
           <legend style="color: #d4af37; font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 0 8px;">Modificadores MIL-STD-2525/APP-6 (~34 campos)</legend>
 
           <div style="font-size: 10px; color: #a0d4e8; margin-bottom: 12px; padding: 8px; background: rgba(160,212,232,0.1); border-radius: 3px;">Todos los campos son opcionales. Completa solo los que apliquen a tu unidad.</div>
 
-          <div class="admin-form-group">
-            <label>Cantidad/Efectivos</label>
-            <input type="number" name="quantity" value="${record?.quantity || ''}" placeholder="Ej: 45, 120">
-          </div>
           <div class="admin-form-group">
             <label>Comentarios de Estado Mayor</label>
             <textarea name="staff_comments" style="min-height: 60px;" placeholder="Observaciones tácticas...">${record?.staff_comments || ''}</textarea>
