@@ -854,8 +854,38 @@ class AdminManager {
     const formData = new FormData(document.getElementById('admin-form'));
     const data = Object.fromEntries(formData);
 
+    // Convertir tipos de datos según la tabla
     if (this.currentTable === 'ejercicios') {
       data.activo = data.activo === 'true' ? true : false;
+    }
+
+    // Convertir IDs FK a números y remover campos vacíos
+    const idFields = ['unidad_militar_base_id', 'usuario_id', 'ejercicio_id', 'unidad_militar_id'];
+    const numericFields = ['quantity', 'pos_x', 'pos_y', 'copias'];
+
+    for (const field of idFields) {
+      if (data[field] && data[field] !== '') {
+        data[field] = parseInt(data[field], 10);
+      } else if (data[field] === '') {
+        delete data[field];
+      }
+    }
+
+    for (const field of numericFields) {
+      if (data[field] && data[field] !== '') {
+        data[field] = field === 'quantity' || field === 'copias' ?
+          parseInt(data[field], 10) :
+          parseFloat(data[field]);
+      } else if (data[field] === '') {
+        delete data[field];
+      }
+    }
+
+    // Remover campos vacíos de texto
+    for (const key in data) {
+      if (data[key] === '') {
+        delete data[key];
+      }
     }
 
     if (this.editingId) {
