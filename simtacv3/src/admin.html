@@ -34,13 +34,13 @@
         <table id="usuarios-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Usuario</th>
-              <th>Nombre</th>
-              <th>Grado</th>
-              <th>Rol</th>
-              <th>Creado</th>
-              <th>Acciones</th>
+              <th title="Identificador único">🔑 ID</th>
+              <th title="Nombre de usuario para login">📧 Usuario</th>
+              <th title="Nombre completo">👤 Nombre</th>
+              <th title="Rango militar">⭐ Grado</th>
+              <th title="Nivel de permisos">👑 Rol</th>
+              <th title="Fecha de creación">📅 Creado</th>
+              <th title="Editar o eliminar registro">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -60,13 +60,13 @@
         <table id="unidades-base-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>SIDC</th>
-              <th>Nombre</th>
-              <th>Tipo</th>
-              <th>País</th>
-              <th>Creado</th>
-              <th>Acciones</th>
+              <th title="Identificador único">🔑 ID</th>
+              <th title="Código simbología MIL-STD-2525">🎖️ SIDC</th>
+              <th title="Nombre de la plantilla">📝 Nombre</th>
+              <th title="Tipo de unidad">🏷️ Tipo</th>
+              <th title="Nación o país">🌍 País</th>
+              <th title="Fecha de creación">📅 Creado</th>
+              <th title="Editar o eliminar plantilla">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -86,13 +86,13 @@
         <table id="unidades-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Plantilla SIDC</th>
-              <th>Tipo</th>
-              <th>Posición X</th>
-              <th>Posición Y</th>
-              <th>Acciones</th>
+              <th title="Identificador único">🔑 ID</th>
+              <th title="Nombre de la instancia de unidad">🚁 Nombre</th>
+              <th title="SIDC de la plantilla base">🎖️ SIDC</th>
+              <th title="Tipo de unidad militar">🏷️ Tipo</th>
+              <th title="Coordenada longitud">📍 Pos X</th>
+              <th title="Coordenada latitud">📍 Pos Y</th>
+              <th title="Editar, eliminar o asignar controladores">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -115,11 +115,11 @@
         <table id="ejercicios-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Sala</th>
-              <th>Estado</th>
-              <th>Acciones</th>
+              <th title="Identificador único">🔑 ID</th>
+              <th title="Nombre del ejercicio">🎯 Nombre</th>
+              <th title="Sala o ubicación del ejercicio">🏛️ Sala</th>
+              <th title="Estado del ejercicio (activo/inactivo)">🔔 Estado</th>
+              <th title="Editar, eliminar o gestionar participantes">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -137,10 +137,10 @@
         <table id="asignaciones-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Usuario</th>
-              <th>Unidad</th>
-              <th>Acciones</th>
+              <th title="Identificador único de la asignación">🔑 ID</th>
+              <th title="Usuario que controla la unidad">👤 Usuario</th>
+              <th title="Unidad militar asignada">🚁 Unidad</th>
+              <th title="Eliminar la asignación">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -159,11 +159,11 @@
         <table id="participantes-table" class="admin-data-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Ejercicio</th>
-              <th>Usuario</th>
-              <th>Bando</th>
-              <th>Acciones</th>
+              <th title="Identificador de participación (ejercicio-usuario)">🔑 ID</th>
+              <th title="Nombre del ejercicio">🎯 Ejercicio</th>
+              <th title="Usuario participante (no-administrador)">👤 Usuario</th>
+              <th title="Bando o facción (azul, rojo, verde, etc.)">🚩 Bando</th>
+              <th title="Editar bando o eliminar participante">⚙️ Acciones</th>
             </tr>
           </thead>
           <tbody></tbody>

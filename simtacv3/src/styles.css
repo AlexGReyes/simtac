@@ -1839,19 +1839,35 @@ button {
 }
 
 .admin-data-table thead {
-  background: rgba(212, 175, 55, 0.1);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.12) 100%);
+  border-bottom: 2px solid #d4af37;
   position: sticky;
   top: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(212, 175, 55, 0.3);
 }
 
 .admin-data-table thead th {
   color: #d4af37;
-  padding: 10px 12px;
+  padding: 12px 14px;
   text-align: left;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  border-right: 1px solid rgba(212, 175, 55, 0.15);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 11px;
+}
+
+.admin-data-table thead th:last-child {
+  border-right: none;
+}
+
+.admin-data-table thead th:hover {
+  background: rgba(212, 175, 55, 0.15);
+  color: #ffeb3b;
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
 }
 
 .admin-data-table tbody {
