@@ -934,6 +934,12 @@ class AdminManager {
           usuarioId: data.usuario_id,
           bando: data.bando,
         };
+      } else if (table === 'asignaciones') {
+        const unidadId = data.unidad_militar_id;
+        endpoint = `/unidades/${unidadId}/usuarios`;
+        data = {
+          usuarioId: data.usuario_id,
+        };
       }
 
       const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -1005,6 +1011,12 @@ class AdminManager {
         const ejercicioId = record.ejercicio_id;
         const usuarioId = record.usuario_id;
         endpoint = `/ejercicios/${ejercicioId}/participantes/${usuarioId}`;
+      } else if (table === 'asignaciones') {
+        const record = this.data.asignaciones.find(a => a.id === id);
+        if (!record) throw new Error('Asignación no encontrada');
+        const unidadId = record.unidad_militar_id;
+        const usuarioId = record.usuario_id;
+        endpoint = `/unidades/${unidadId}/usuarios/${usuarioId}`;
       }
 
       const response = await fetch(`${API_BASE}${endpoint}`, {
