@@ -1773,6 +1773,39 @@ button {
   display: flex;
 }
 
+.admin-filter-bar {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(160, 212, 232, 0.15);
+  background: rgba(160, 212, 232, 0.05);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-filter-input,
+.admin-filter-select {
+  padding: 6px 10px;
+  background: rgba(74, 90, 82, 0.6);
+  border: 1px solid rgba(160, 212, 232, 0.3);
+  color: #e8e8e8;
+  border-radius: 4px;
+  font-size: 12px;
+  min-height: 32px;
+}
+
+.admin-filter-input::placeholder {
+  color: rgba(160, 212, 232, 0.5);
+}
+
+.admin-filter-input:focus,
+.admin-filter-select:focus {
+  outline: none;
+  border-color: #a0d4e8;
+  background: rgba(74, 90, 82, 0.8);
+  box-shadow: 0 0 8px rgba(160, 212, 232, 0.2);
+}
+
 .admin-actions {
   padding: 12px 16px;
   border-bottom: 1px solid rgba(212, 175, 55, 0.2);

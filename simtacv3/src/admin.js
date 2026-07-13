@@ -43,6 +43,26 @@ class AdminManager {
     document.getElementById('ejercicios-new-btn')?.addEventListener('click', () => this.openForm('ejercicios'));
     document.getElementById('asignaciones-new-btn')?.addEventListener('click', () => this.openForm('asignaciones'));
     document.getElementById('participantes-new-btn')?.addEventListener('click', () => this.openForm('participantes'));
+
+    // Filtros
+    document.getElementById('usuarios-filter')?.addEventListener('input', () => this.filterTable('usuarios'));
+    document.getElementById('usuarios-rol-filter')?.addEventListener('change', () => this.filterTable('usuarios'));
+
+    document.getElementById('unidades-base-filter')?.addEventListener('input', () => this.filterTable('unidades-base'));
+    document.getElementById('unidades-base-tipo-filter')?.addEventListener('input', () => this.filterTable('unidades-base'));
+    document.getElementById('unidades-base-pais-filter')?.addEventListener('input', () => this.filterTable('unidades-base'));
+
+    document.getElementById('unidades-filter')?.addEventListener('input', () => this.filterTable('unidades'));
+    document.getElementById('unidades-tipo-filter')?.addEventListener('input', () => this.filterTable('unidades'));
+    document.getElementById('unidades-sidc-filter')?.addEventListener('input', () => this.filterTable('unidades'));
+
+    document.getElementById('ejercicios-filter')?.addEventListener('input', () => this.filterTable('ejercicios'));
+    document.getElementById('ejercicios-estado-filter')?.addEventListener('change', () => this.filterTable('ejercicios'));
+
+    document.getElementById('asignaciones-filter')?.addEventListener('input', () => this.filterTable('asignaciones'));
+
+    document.getElementById('participantes-filter')?.addEventListener('input', () => this.filterTable('participantes'));
+    document.getElementById('participantes-bando-filter')?.addEventListener('input', () => this.filterTable('participantes'));
   }
 
   getTableDescription(tableName) {
@@ -70,6 +90,97 @@ class AdminManager {
     }
 
     descriptionEl.textContent = description;
+  }
+
+  filterTable(tableName) {
+    const data = this.data[tableName.replace('-', '_')] || [];
+    let filtered = data;
+
+    if (tableName === 'usuarios') {
+      const searchText = document.getElementById('usuarios-filter')?.value.toLowerCase() || '';
+      const rolFilter = document.getElementById('usuarios-rol-filter')?.value || '';
+
+      filtered = data.filter(u => {
+        const matchSearch = !searchText ||
+          u.usuario.toLowerCase().includes(searchText) ||
+          u.nombre.toLowerCase().includes(searchText) ||
+          (u.grado && u.grado.toLowerCase().includes(searchText));
+        const matchRol = !rolFilter || u.rol === rolFilter;
+        return matchSearch && matchRol;
+      });
+    } else if (tableName === 'unidades-base') {
+      const searchText = document.getElementById('unidades-base-filter')?.value.toLowerCase() || '';
+      const tipoFilter = document.getElementById('unidades-base-tipo-filter')?.value.toLowerCase() || '';
+      const paisFilter = document.getElementById('unidades-base-pais-filter')?.value.toLowerCase() || '';
+
+      filtered = data.filter(u => {
+        const matchSearch = !searchText ||
+          u.sidc.toLowerCase().includes(searchText) ||
+          u.nombre.toLowerCase().includes(searchText);
+        const matchTipo = !tipoFilter || (u.tipo && u.tipo.toLowerCase().includes(tipoFilter));
+        const matchPais = !paisFilter || (u.country && u.country.toLowerCase().includes(paisFilter));
+        return matchSearch && matchTipo && matchPais;
+      });
+    } else if (tableName === 'unidades') {
+      const searchText = document.getElementById('unidades-filter')?.value.toLowerCase() || '';
+      const tipoFilter = document.getElementById('unidades-tipo-filter')?.value.toLowerCase() || '';
+      const sidcFilter = document.getElementById('unidades-sidc-filter')?.value.toLowerCase() || '';
+
+      filtered = data.filter(u => {
+        const matchSearch = !searchText || u.nombre.toLowerCase().includes(searchText);
+        const matchTipo = !tipoFilter || (u.tipo && u.tipo.toLowerCase().includes(tipoFilter));
+        const matchSidc = !sidcFilter || (u.sidc && u.sidc.toLowerCase().includes(sidcFilter));
+        return matchSearch && matchTipo && matchSidc;
+      });
+    } else if (tableName === 'ejercicios') {
+      const searchText = document.getElementById('ejercicios-filter')?.value.toLowerCase() || '';
+      const estadoFilter = document.getElementById('ejercicios-estado-filter')?.value;
+
+      filtered = data.filter(e => {
+        const matchSearch = !searchText ||
+          e.nombre.toLowerCase().includes(searchText) ||
+          (e.sala && e.sala.toLowerCase().includes(searchText));
+        const matchEstado = estadoFilter === '' || String(e.activo) === estadoFilter;
+        return matchSearch && matchEstado;
+      });
+    } else if (tableName === 'asignaciones') {
+      const searchText = document.getElementById('asignaciones-filter')?.value.toLowerCase() || '';
+
+      filtered = data.filter(a => {
+        return !searchText ||
+          (a.usuario_nombre && a.usuario_nombre.toLowerCase().includes(searchText)) ||
+          (a.unidad_nombre && a.unidad_nombre.toLowerCase().includes(searchText));
+      });
+    } else if (tableName === 'participantes') {
+      const searchText = document.getElementById('participantes-filter')?.value.toLowerCase() || '';
+      const bandoFilter = document.getElementById('participantes-bando-filter')?.value.toLowerCase() || '';
+
+      filtered = data.filter(p => {
+        const matchSearch = !searchText ||
+          (p.usuario_nombre && p.usuario_nombre.toLowerCase().includes(searchText)) ||
+          (p.ejercicio_nombre && p.ejercicio_nombre.toLowerCase().includes(searchText));
+        const matchBando = !bandoFilter || (p.bando && p.bando.toLowerCase().includes(bandoFilter));
+        return matchSearch && matchBando;
+      });
+    }
+
+    this.renderTableByName(tableName, filtered);
+  }
+
+  renderTableByName(tableName, data) {
+    if (tableName === 'usuarios') {
+      this.renderUsuariosTable(data);
+    } else if (tableName === 'unidades-base') {
+      this.renderUnidadesBaseTable(data);
+    } else if (tableName === 'unidades') {
+      this.renderUnidadesTable(data);
+    } else if (tableName === 'ejercicios') {
+      this.renderEjerciciosTable(data);
+    } else if (tableName === 'asignaciones') {
+      this.renderAsignacionesTable(data);
+    } else if (tableName === 'participantes') {
+      this.renderParticipantesTable(data);
+    }
   }
 
   switchTable(tableName) {
@@ -293,11 +404,13 @@ class AdminManager {
             const parts = await partResponse.json();
             parts.forEach(p => {
               participantes.push({
-                id: p.id,
+                id: `${ejercicio.id}-${p.usuario_id}`,
                 ejercicio_id: ejercicio.id,
                 ejercicio_nombre: ejercicio.nombre,
                 usuario_id: p.usuario_id,
-                usuario_nombre: p.usuario_nombre,
+                usuario_nombre: p.usuario,
+                nombre: p.nombre,
+                grado: p.grado,
                 bando: p.bando,
               });
             });
