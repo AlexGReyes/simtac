@@ -390,10 +390,34 @@ class AdminManager {
         }
       }
 
-      // Las asignaciones se construyen dinámicamente desde usuarios y unidades
-      // Por ahora, mostrar tabla vacía (no hay endpoint GET /asignaciones en API)
-      this.data.asignaciones = [];
-      this.renderAsignacionesTable([]);
+      // Cargar asignaciones (unidad_militar_usuario)
+      // Para cada unidad, obtener sus usuarios asignados
+      const asignaciones = [];
+      let id = 1;
+      for (const unidad of (this.data.unidades || [])) {
+        try {
+          const usuariosResponse = await fetch(`${API_BASE}/unidades/${unidad.id}/usuarios`, {
+            headers: { 'Authorization': `Bearer ${token}` },
+          });
+          if (usuariosResponse.ok) {
+            const usuarios = await usuariosResponse.json();
+            usuarios.forEach(usuario => {
+              asignaciones.push({
+                id: `${unidad.id}-${usuario.id}`,
+                unidad_militar_id: unidad.id,
+                unidad_nombre: unidad.nombre,
+                usuario_id: usuario.id,
+                usuario_nombre: usuario.usuario,
+              });
+            });
+          }
+        } catch (e) {
+          console.error(`Error loading usuarios for unidad ${unidad.id}:`, e);
+        }
+      }
+
+      this.data.asignaciones = asignaciones;
+      this.renderAsignacionesTable(asignaciones);
     } catch (error) {
       console.error('Error loading asignaciones:', error);
     }
