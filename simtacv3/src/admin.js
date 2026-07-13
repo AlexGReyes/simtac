@@ -265,7 +265,7 @@ class AdminManager {
 
       if (!response.ok) throw new Error(`Error ${response.status}`);
       const unidades = await response.json();
-      this.data.unidadesBase = unidades;
+      this.data.unidades_base = unidades;
       this.renderUnidadesBaseTable(unidades);
     } catch (error) {
       console.error('Error loading unidades base:', error);
@@ -593,7 +593,7 @@ class AdminManager {
             <label>Plantilla Base (SIDC) *</label>
             <select name="unidad_militar_base_id" required>
               <option value="">Seleccionar plantilla...</option>
-              ${(this.data.unidadesBase || []).map(u =>
+              ${(this.data.unidades_base || []).map(u =>
                 `<option value="${u.id}" ${record?.unidad_militar_base_id === u.id ? 'selected' : ''}>${u.nombre} (${u.sidc})</option>`
               ).join('')}
             </select>
