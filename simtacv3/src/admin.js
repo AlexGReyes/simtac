@@ -237,19 +237,23 @@ class AdminManager {
     const tbody = document.querySelector('#usuarios-table tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = usuarios.map(u => `
-      <tr>
-        <td>${u.id}</td>
-        <td>${u.usuario}</td>
-        <td>${u.nombre}</td>
-        <td>${u.grado || '-'}</td>
-        <td><span class="admin-rol-badge ${u.rol}">${u.rol}</span></td>
-        <td>
-          <button class="admin-edit-btn" onclick="adminManager.openForm('usuarios', '${u.id}')">Editar</button>
-          <button class="admin-delete-btn" onclick="adminManager.deleteRecord('usuarios', '${u.id}')">Eliminar</button>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = usuarios.map(u => {
+      const fechaCreacion = u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+      return `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.usuario}</td>
+          <td>${u.nombre}</td>
+          <td>${u.grado || '-'}</td>
+          <td><span class="admin-rol-badge ${u.rol}">${u.rol}</span></td>
+          <td><small>${fechaCreacion}</small></td>
+          <td>
+            <button class="admin-edit-btn" onclick="adminManager.openForm('usuarios', '${u.id}')">Editar</button>
+            <button class="admin-delete-btn" onclick="adminManager.deleteRecord('usuarios', '${u.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
   async loadUnidadesBase() {
@@ -272,19 +276,23 @@ class AdminManager {
     const tbody = document.querySelector('#unidades-base-table tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = unidades.map(u => `
-      <tr>
-        <td>${u.id}</td>
-        <td>${u.sidc}</td>
-        <td>${u.nombre}</td>
-        <td>${u.tipo || '-'}</td>
-        <td>${u.country || '-'}</td>
-        <td>
-          <button class="admin-edit-btn" onclick="adminManager.openForm('unidades-base', '${u.id}')">Editar</button>
-          <button class="admin-delete-btn" onclick="adminManager.deleteRecord('unidades-base', '${u.id}')">Eliminar</button>
-        </td>
-      </tr>
-    `).join('');
+    tbody.innerHTML = unidades.map(u => {
+      const fechaCreacion = u.fecha_creacion ? new Date(u.fecha_creacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' }) : '-';
+      return `
+        <tr>
+          <td>${u.id}</td>
+          <td><code>${u.sidc}</code></td>
+          <td>${u.nombre}</td>
+          <td>${u.tipo || '-'}</td>
+          <td>${u.country || '-'}</td>
+          <td><small>${fechaCreacion}</small></td>
+          <td>
+            <button class="admin-edit-btn" onclick="adminManager.openForm('unidades-base', '${u.id}')">Editar</button>
+            <button class="admin-delete-btn" onclick="adminManager.deleteRecord('unidades-base', '${u.id}')">Eliminar</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
   }
 
   async loadUnidades() {
