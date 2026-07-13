@@ -1,0 +1,139 @@
+<!-- Admin Section (solo visible para administradores) -->
+<div id="admin-modal" class="admin-modal">
+  <div class="admin-header">
+    <h2 class="admin-title">⚙️ ADMINISTRACIÓN DEL SISTEMA</h2>
+    <button id="admin-close-btn" class="admin-close-btn">✕</button>
+  </div>
+
+  <div class="admin-container">
+    <!-- Navegación de Tablas -->
+    <div class="admin-nav">
+      <button class="admin-tab-btn active" data-table="usuarios">👤 Usuarios</button>
+      <button class="admin-tab-btn" data-table="unidades-base">🎖️ Plantillas</button>
+      <button class="admin-tab-btn" data-table="unidades">🚁 Unidades</button>
+      <button class="admin-tab-btn" data-table="ejercicios">🎯 Ejercicios</button>
+      <button class="admin-tab-btn" data-table="asignaciones">🔗 Asignaciones</button>
+    </div>
+
+    <!-- Contenido de Tablas -->
+    <div class="admin-content">
+      <!-- USUARIOS -->
+      <div class="admin-table-view active" data-table="usuarios">
+        <div class="admin-actions">
+          <button id="usuarios-new-btn" class="admin-new-btn">+ Nuevo Usuario</button>
+        </div>
+        <table id="usuarios-table" class="admin-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Grado</th>
+              <th>Rol</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- UNIDADES BASE -->
+      <div class="admin-table-view" data-table="unidades-base">
+        <div class="admin-actions">
+          <button id="unidades-base-new-btn" class="admin-new-btn">+ Nueva Plantilla</button>
+        </div>
+        <table id="unidades-base-table" class="admin-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>SIDC</th>
+              <th>Nombre</th>
+              <th>Tipo</th>
+              <th>País</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- UNIDADES MILITARES -->
+      <div class="admin-table-view" data-table="unidades">
+        <div class="admin-actions">
+          <button id="unidades-new-btn" class="admin-new-btn">+ Nueva Unidad</button>
+        </div>
+        <table id="unidades-table" class="admin-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Plantilla SIDC</th>
+              <th>Tipo</th>
+              <th>Posición X</th>
+              <th>Posición Y</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- EJERCICIOS -->
+      <div class="admin-table-view" data-table="ejercicios">
+        <div class="admin-actions">
+          <button id="ejercicios-new-btn" class="admin-new-btn">+ Nuevo Ejercicio</button>
+        </div>
+        <table id="ejercicios-table" class="admin-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Sala</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- ASIGNACIONES -->
+      <div class="admin-table-view" data-table="asignaciones">
+        <div class="admin-actions">
+          <button id="asignaciones-new-btn" class="admin-new-btn">+ Nueva Asignación</button>
+        </div>
+        <table id="asignaciones-table" class="admin-data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Usuario</th>
+              <th>Unidad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Formulario -->
+<div id="admin-form-modal" class="admin-form-modal">
+  <div class="admin-form-content">
+    <div class="admin-form-header">
+      <h3 id="admin-form-title"></h3>
+      <button id="admin-form-close-btn" class="admin-form-close">✕</button>
+    </div>
+    <form id="admin-form">
+      <div id="admin-form-fields"></div>
+      <div class="admin-form-actions">
+        <button type="submit" class="admin-submit-btn">Guardar</button>
+        <button type="button" id="admin-form-cancel-btn" class="admin-cancel-btn">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Overlay -->
+<div id="admin-form-overlay" class="admin-form-overlay"></div>
