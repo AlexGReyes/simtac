@@ -59,26 +59,67 @@ pendiente, es historial de pedidos ya resueltos).
 
 ## Requisitos
 
-- **Node.js** (con npm)
-- **Rust** (rustc, cargo) — [rustup.rs](https://rustup.rs/)
-- Herramientas de build según plataforma:
-  - Windows: Microsoft Visual C++ Build Tools
-  - macOS: Xcode Command Line Tools
-  - Linux: GCC/Clang y headers de desarrollo del sistema
+- **Node.js** (con npm) — [nodejs.org](https://nodejs.org/)
+- **Rust** (rustc, cargo) — instalar con [rustup](https://rustup.rs/)
+- Herramientas de build nativas según plataforma:
+  - **Windows**: [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
+    (workload "Desktop development with C++") y
+    [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/)
+    (viene preinstalado en Windows 11 y en Windows 10 actualizado)
+  - **macOS**: Xcode Command Line Tools (`xcode-select --install`)
+  - **Linux**: GCC/Clang, `webkit2gtk`, `libssl-dev` y demás headers de
+    desarrollo del sistema — ver la
+    [guía oficial de prerequisitos de Tauri](https://v2.tauri.app/start/prerequisites/)
+    para el paquete exacto según la distro
 
-Verificá el entorno con `npm run tauri info`.
+Con Node.js y Rust instalados, verificá que Tauri detecta todo correctamente:
+
+```bash
+npm install
+npx tauri info
+```
+
+Revisá que no haya advertencias en rojo antes de seguir.
+
+## Instalación
+
+```bash
+git clone https://github.com/AlexGReyes/simtac.git
+cd simtacv3
+npm install
+```
+
+`npm install` trae el CLI de Tauri (`@tauri-apps/cli`) y las dependencias JS
+del frontend (`ol`, `milsymbol`, `socket.io-client`) que **también** están
+vendorizadas en `src/vendor/` para que la app corra sin internet en runtime —
+`npm install` es solo para desarrollo/build, no para lo que carga el WebView.
 
 ## Desarrollo
 
 ```bash
-npm install
-npm run tauri dev     # modo desarrollo, hot-reload del frontend
-npm run tauri build   # build de release (bundles/instaladores)
+npm run tauri dev     # levanta la app en modo desarrollo con hot-reload
 ```
 
-El frontend (`src/`) se sirve tal cual, sin paso de build — los cambios ahí
-recargan solos. Cambios en `src-tauri/` (Rust) requieren reiniciar
-`npm run tauri dev`.
+La primera vez, `cargo` compila todas las dependencias de Rust (puede tardar
+varios minutos); las siguientes corridas son incrementales y arrancan mucho
+más rápido. Se abre una ventana nativa (no un navegador) con la app ya
+corriendo y las DevTools disponibles por clic derecho → Inspeccionar.
+
+- **Cambios en `src/`** (HTML/CSS/JS) recargan solos, sin reiniciar nada — el
+  frontend se sirve tal cual, sin paso de build (`frontendDist` apunta
+  directo a `../src` en `tauri.conf.json`).
+- **Cambios en `src-tauri/`** (Rust) no tienen hot-reload: hay que cortar
+  (`Ctrl+C`) y volver a correr `npm run tauri dev` para que compilen.
+
+Para compilar el build de producción (bundles/instaladores nativos —
+`.msi`/`.exe` en Windows, `.dmg`/`.app` en macOS, `.deb`/`.AppImage` en
+Linux, según la plataforma donde se corra):
+
+```bash
+npm run tauri build
+```
+
+Los artefactos quedan en `src-tauri/target/release/bundle/`.
 
 ## Estructura
 
