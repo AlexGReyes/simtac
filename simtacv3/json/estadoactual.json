@@ -1,0 +1,153 @@
+{
+  "ejercicio": 2026,
+  "sala": 1,
+  "unidadesRojas": [
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1001,
+      "posicion": [-71.0589, 42.3601],
+      "personal": 45,
+      "ataque": 75,
+      "defensa": 68,
+      "lineaDeVista": 2500,
+      "peleando": false,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1002,
+      "posicion": [42.3615, -71.0644],
+      "personal": 12,
+      "ataque": 92,
+      "defensa": 85,
+      "lineaDeVista": 3200,
+      "peleando": true,
+      "enMovimiento": false
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1003,
+      "posicion": [42.3525, -71.0511],
+      "personal": 38,
+      "ataque": 68,
+      "defensa": 72,
+      "lineaDeVista": 2800,
+      "peleando": false,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1004,
+      "posicion": [42.3450, -71.0400],
+      "personal": 85,
+      "ataque": 88,
+      "defensa": 78,
+      "lineaDeVista": 3500,
+      "peleando": false,
+      "enMovimiento": false
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1005,
+      "posicion": [42.3700, -71.0700],
+      "personal": 22,
+      "ataque": 65,
+      "defensa": 60,
+      "lineaDeVista": 2200,
+      "peleando": true,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 1006,
+      "posicion": [42.3580, -71.0480],
+      "personal": 48,
+      "ataque": 72,
+      "defensa": 70,
+      "lineaDeVista": 2400,
+      "peleando": false,
+      "enMovimiento": false
+    }
+  ],
+  "unidadesAzules": [
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2001,
+      "posicion": [42.3550, -71.0650],
+      "personal": 50,
+      "ataque": 78,
+      "defensa": 72,
+      "lineaDeVista": 2600,
+      "peleando": true,
+      "enMovimiento": false
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2002,
+      "posicion": [42.3490, -71.0530],
+      "personal": 14,
+      "ataque": 95,
+      "defensa": 88,
+      "lineaDeVista": 3400,
+      "peleando": false,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2003,
+      "posicion": [42.3620, -71.0420],
+      "personal": 40,
+      "ataque": 70,
+      "defensa": 75,
+      "lineaDeVista": 2900,
+      "peleando": true,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2004,
+      "posicion": [42.3300, -71.0600],
+      "personal": 90,
+      "ataque": 85,
+      "defensa": 80,
+      "lineaDeVista": 3600,
+      "peleando": false,
+      "enMovimiento": false
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2005,
+      "posicion": [42.3400, -71.0750],
+      "personal": 25,
+      "ataque": 62,
+      "defensa": 65,
+      "lineaDeVista": 2300,
+      "peleando": false,
+      "enMovimiento": true
+    },
+    {
+      "SIDC": "10030600000000000000",
+      "id": 2006,
+      "posicion": [42.3750, -71.0350],
+      "personal": 52,
+      "ataque": 75,
+      "defensa": 68,
+      "lineaDeVista": 2500,
+      "peleando": true,
+      "enMovimiento": false
+    }
+  ],
+  "unidadesNeutrales": [
+    {
+      "SIDC": "10030600000000000000",
+      "id": 3001,
+      "posicion": [42.3560, -71.0560],
+      "personal": 15,
+      "ataque": 30,
+      "defensa": 35,
+      "lineaDeVista": 1500,
+      "peleando": false,
+      "enMovimiento": true
+    }
+  ]
+}

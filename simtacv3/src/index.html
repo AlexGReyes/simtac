@@ -1,23 +1,33 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol@10.9.0/ol.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Unica+One&display=swap" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/ol@10.9.0/dist/ol.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/milsymbol@3.0.4/dist/milsymbol.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.5.4/dist/socket.io.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>simtacv3</title>
-    <script type="module" src="/main.js" defer></script>
+    <title>simtac</title>
+    <link rel="icon" type="image/png" href="/assets/logo-simtac.png" />
+
+    <link rel="stylesheet" href="colors.css" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="estilos-simtac.css" />
+    <link rel="stylesheet" href="vendor/ol/ol.css" />
+    <link rel="stylesheet" href="vendor/fonts.css" />
+
+    <!-- Vendorizado en src/vendor/ — el proyecto corre sin conexión a
+         internet, nada se carga de un CDN. Ver README de la carpeta. -->
+    <script src="vendor/ol/ol.js"></script>
+    <script src="vendor/milsymbol/milsymbol.js"></script>
+    <script src="vendor/socket.io/socket.io.js"></script>
+
+    <script type="module" src="/admin.js" defer></script>
+    <script type="module" src="/app.js" defer></script>
   </head>
 
   <body>
-    <!-- Pantalla de Login -->
+    <!-- ==================== FASE 1 · Login ==================== -->
     <div id="login-screen" class="login-screen active">
       <div class="login-container">
         <div class="login-header">
+          <img class="login-logo" src="/assets/logo-simtac.png" alt="Logo SIMTAC" />
           <h1 class="login-title">SIMTAC</h1>
           <p class="login-subtitle">Simulador Militar Táctico</p>
         </div>
@@ -27,7 +37,6 @@
           <button class="login-tab-btn" data-tab="signup">Registrarse</button>
         </div>
 
-        <!-- Pestaña de Ingreso -->
         <form id="signin-form" class="login-form active" data-form="signin">
           <div class="form-group">
             <label for="signin-usuario">Usuario:</label>
@@ -42,11 +51,10 @@
           <div id="signin-loading" class="login-loading" style="display: none;">Ingresando...</div>
         </form>
 
-        <!-- Pestaña de Registro -->
         <form id="signup-form" class="login-form" data-form="signup">
           <div class="form-group">
             <label for="signup-usuario">Usuario:</label>
-            <input type="text" id="signup-usuario" name="usuario" placeholder="Elige un usuario" required />
+            <input type="text" id="signup-usuario" name="usuario" placeholder="Elegí un usuario" required />
           </div>
           <div class="form-group">
             <label for="signup-password">Contraseña:</label>
@@ -57,195 +65,78 @@
             <input type="text" id="signup-nombre" name="nombre" placeholder="Tu nombre" required />
           </div>
           <div class="form-group">
-            <label for="signup-grado">Grado Militar (Opcional):</label>
+            <label for="signup-grado">Grado Militar (opcional):</label>
             <input type="text" id="signup-grado" name="grado" placeholder="Ej: Capitán, Teniente..." />
           </div>
           <button type="submit" class="login-btn">REGISTRARSE</button>
           <div id="signup-error" class="login-error"></div>
           <div id="signup-loading" class="login-loading" style="display: none;">Registrando...</div>
+          <p class="login-nota">Todo usuario nuevo nace con rol <strong>jugador</strong>.</p>
         </form>
       </div>
     </div>
 
-    <!-- Contenedor Principal (Oculto hasta autenticación) -->
+    <!-- ==================== App ==================== -->
     <div id="app-container" class="app-container">
       <header class="top-menu">
-      <div class="user-section">
-        <button id="logout-btn" class="logout-btn" title="Cerrar sesión">🚪</button>
-        <div class="avatar">AG</div>
-        <div class="user-info">
-          <div class="username">Alejandro Reyes</div>
-          <div class="role">Operador Táctico</div>
-        </div>
-      </div>
-
-      <div class="system-section">
-        <div class="system-name">SIMTAC</div>
-        <div class="system-subtitle">Simulador Militar Táctico</div>
-      </div>
-
-      <div class="clocks-section">
-        <div class="clock">
-          <div class="clock-label">HORA LOCAL</div>
-          <div class="clock-time" id="local-time">00:00:00</div>
-          <div class="clock-date" id="local-date">--/--/----</div>
-        </div>
-        <div class="clock-divider"></div>
-        <div class="clock">
-          <div class="clock-label">UTC</div>
-          <div class="clock-time" id="utc-time">00:00:00</div>
-          <div class="clock-date" id="utc-date">--/--/----</div>
-        </div>
-      </div>
-    </header>
-
-    <main id="map-container" class="map-container"></main>
-    <div id="coordinates-panel" class="coordinates-panel">
-      <div id="zoom-level">Zoom: --</div>
-      <div id="mouse-coordinates">Coordenadas: --, --</div>
-    </div>
-
-    <!-- Menú Lateral de Unidad Seleccionada -->
-    <div id="unit-menu" class="unit-menu">
-      <div class="unit-menu-actions">
-        <button class="unit-action" data-action="movement" title="Movimiento Terrestre">🚗</button>
-        <button class="unit-action" data-action="mission" title="Misión Especial">⚡</button>
-        <button class="unit-action" data-action="details" title="Detalles">ℹ️</button>
-      </div>
-    </div>
-
-    <!-- Botón de Unidad Seleccionada -->
-    <button id="unit-panel-btn" class="unit-panel-btn">
-      <span class="btn-icon">⚔️</span>
-      <span class="btn-text">DETALLES</span>
-    </button>
-
-    <!-- Modal con Pestañas -->
-    <div id="unit-modal" class="unit-modal">
-      <div class="modal-header">
-        <h2 class="modal-title">Panel de Control</h2>
-        <button class="modal-close" id="modal-close-btn">✕</button>
-      </div>
-
-      <div class="modal-tabs">
-        <button class="tab-btn active" data-tab="logistica">Logística</button>
-        <button class="tab-btn" data-tab="detalles">Detalles de Unidad</button>
-        <button class="tab-btn" data-tab="documentacion">Documentación</button>
-      </div>
-
-      <div class="modal-content">
-        <div class="tab-pane active" id="logistica">
-          <!-- Contenido de Logística -->
-        </div>
-        <div class="tab-pane" id="detalles">
-          <!-- Contenido de Detalles de Unidad -->
-        </div>
-        <div class="tab-pane" id="documentacion">
-          <div class="docs-container">
-            <!-- Sidebar de Carpetas -->
-            <aside class="docs-sidebar">
-              <button class="docs-compose-btn" id="docs-compose-btn">
-                <span class="compose-icon">✎</span>
-                <span class="compose-text">Nuevo Documento</span>
-              </button>
-              <div class="docs-folders">
-                <button class="docs-folder-btn active" data-folder="inbox">
-                  <span class="folder-icon">📥</span>
-                  <span class="folder-name">Bandeja Entrada</span>
-                  <span class="folder-count" id="inbox-count">0</span>
-                </button>
-                <button class="docs-folder-btn" data-folder="outbox">
-                  <span class="folder-icon">📤</span>
-                  <span class="folder-name">Bandeja Salida</span>
-                  <span class="folder-count" id="outbox-count">0</span>
-                </button>
-              </div>
-            </aside>
-
-            <!-- Área Principal -->
-            <div class="docs-main">
-              <!-- Vista Lista de Documentos -->
-              <div id="docs-list-view" class="docs-view active">
-                <div class="docs-list-header">
-                  <h3 id="docs-list-title" class="list-title">Bandeja de Entrada</h3>
-                  <input type="text" class="docs-search" id="docs-search" placeholder="Buscar documentos...">
-                </div>
-                <div class="docs-list" id="docs-list">
-                  <!-- Los documentos irán aquí -->
-                </div>
-              </div>
-
-              <!-- Vista Detalle de Documento -->
-              <div id="docs-detail-view" class="docs-view">
-                <div class="docs-detail-header">
-                  <button class="docs-back-btn" id="docs-back-btn">← Volver</button>
-                  <div class="docs-detail-actions">
-                    <button class="docs-action-btn" id="docs-reply-btn" title="Responder">↩️</button>
-                    <button class="docs-action-btn" id="docs-delete-btn" title="Eliminar">🗑️</button>
-                  </div>
-                </div>
-                <div class="docs-detail-content">
-                  <div class="docs-detail-meta">
-                    <div class="detail-row">
-                      <span class="detail-label">De:</span>
-                      <span class="detail-value" id="detail-from">--</span>
-                    </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Para:</span>
-                      <span class="detail-value" id="detail-to">--</span>
-                    </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Asunto:</span>
-                      <span class="detail-value" id="detail-subject">--</span>
-                    </div>
-                    <div class="detail-row">
-                      <span class="detail-label">Fecha:</span>
-                      <span class="detail-value" id="detail-date">--</span>
-                    </div>
-                  </div>
-                  <div class="docs-detail-body" id="detail-body">
-                    <!-- Contenido del documento -->
-                  </div>
-                </div>
-              </div>
-
-              <!-- Vista Composición -->
-              <div id="docs-compose-view" class="docs-view">
-                <div class="docs-compose-header">
-                  <h3>Nuevo Documento</h3>
-                  <button class="docs-close-compose-btn" id="docs-close-compose-btn">✕</button>
-                </div>
-                <div class="docs-compose-form">
-                  <div class="form-group">
-                    <label for="compose-to">Para:</label>
-                    <input type="text" id="compose-to" placeholder="Destinatarios..." class="compose-input">
-                  </div>
-                  <div class="form-group">
-                    <label for="compose-subject">Asunto:</label>
-                    <input type="text" id="compose-subject" placeholder="Asunto del documento..." class="compose-input">
-                  </div>
-                  <div class="form-group">
-                    <label for="compose-body">Contenido:</label>
-                    <textarea id="compose-body" placeholder="Escribir contenido..." class="compose-textarea"></textarea>
-                  </div>
-                  <div class="form-actions">
-                    <button id="docs-send-btn" class="docs-send-btn">Enviar</button>
-                    <button id="docs-draft-btn" class="docs-draft-btn">Guardar como Borrador</button>
-                  </div>
-                </div>
-              </div>
-            </div>
+        <div class="user-section">
+          <button id="admin-btn" class="admin-btn" title="Administración (usuarios, unidades, ejercicios)" style="display: none;">⚙️</button>
+          <button id="catalogos-btn" class="admin-btn" title="Catálogos (armamento, vehículos)" style="display: none;">🗂️</button>
+          <button id="docs-btn" class="admin-btn" title="Documentos entre unidades">📄</button>
+          <button id="boletines-btn" class="admin-btn" title="Boletines de la dirección" style="display: none;">📢</button>
+          <button id="mis-unidades-btn" class="admin-btn" title="Mis unidades: ubicarlas rápido en el mapa" style="display: none;">📍</button>
+          <button id="logistica-btn" class="admin-btn" title="Logística: km recorridos, munición y bajas">🪖</button>
+          <button id="logout-btn" class="logout-btn" title="Cerrar sesión">🚪</button>
+          <div class="avatar"><img src="/assets/logo-simtac.png" alt="Logo SIMTAC" /></div>
+          <div class="user-info">
+            <div class="username">--</div>
+            <div class="role">--</div>
           </div>
         </div>
+
+        <div class="system-section">
+          <div class="system-name">SIMTAC</div>
+          <!-- Fase 3: estado del ejercicio (activo / pausado / detenido) -->
+          <div id="ejercicio-indicador" class="ejercicio-indicador">
+            <span class="ei-punto"></span><span class="ei-texto">Sin ejercicio</span>
+          </div>
+        </div>
+
+        <div class="clocks-section">
+          <div id="red-indicador" class="red-indicador" title="Conexión con el servidor">●</div>
+          <div class="clock">
+            <div class="clock-label">HORA LOCAL</div>
+            <div class="clock-time" id="local-time">00:00:00</div>
+            <div class="clock-date" id="local-date">--/--/----</div>
+          </div>
+          <div class="clock-divider"></div>
+          <div class="clock">
+            <div class="clock-label">HORA TÁCTICA</div>
+            <div class="clock-time" id="tactica-time">00:00:00</div>
+            <div class="clock-date" id="tactica-date">--/--/----</div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Fase 3: el mapa. Los paneles (entidad, contactos, dirección, log de
+           combate, boletines) los inyectan sus módulos sobre esta capa. -->
+      <main id="map-container" class="map-container"></main>
+
+      <div class="mapa-barra">
+        <button id="mapa-encuadrar" class="mapa-btn" title="Encuadrar todas las entidades">⤢</button>
+        <button id="mapa-rangos" class="mapa-btn" title="Círculos de rango de visión">◎</button>
+        <button id="mapa-arrastrar" class="mapa-btn" title="Reposicionar entidades arrastrándolas (administrador)" style="display: none;">✋</button>
+        <button id="mapa-cambiar-ejercicio" class="mapa-btn" title="Volver a la selección de ejercicio">⇄</button>
+      </div>
+
+      <div id="coordinates-panel" class="coordinates-panel">
+        <div id="zoom-level">Zoom: --</div>
+        <div id="mouse-coordinates">Coordenadas: --, --</div>
       </div>
     </div>
 
-    <!-- Overlay para cerrar modal -->
-    <div id="modal-overlay" class="modal-overlay"></div>
-
-    <!-- Chat Minimalista -->
+    <!-- ==================== FASE 7 · Chat ==================== -->
     <div id="chat-container" class="chat-container">
-      <!-- Chat Colapsado -->
       <div id="chat-minimized" class="chat-minimized">
         <div class="chat-header-mini">
           <span class="chat-icon">💬</span>
@@ -254,40 +145,292 @@
         </div>
       </div>
 
-      <!-- Chat Expandido -->
       <div id="chat-expanded" class="chat-expanded">
         <div class="chat-header">
           <h3 class="chat-title">CHAT TÁCTICO</h3>
           <button id="chat-minimize-btn" class="chat-minimize-btn">−</button>
         </div>
 
+        <!-- Dos chats distintos: el de bando vive en el JSON del ejercicio,
+             el privado es mensajería usuario↔usuario en Postgres. -->
+        <div class="chat-tabs">
+          <button class="chat-tab active" data-chat-tab="bando">Bando</button>
+          <button class="chat-tab" data-chat-tab="privado">Privado</button>
+        </div>
+
         <div class="chat-content">
-          <!-- Panel de Mensajes -->
           <div class="chat-messages-panel">
-            <div class="messages-container">
-              <!-- Los mensajes irán aquí -->
-            </div>
+            <div class="messages-container" id="chat-mensajes"></div>
             <div class="chat-input-area">
-              <input
-                type="text"
-                class="chat-input"
-                placeholder="Escribir mensaje..."
-                readonly
-              />
-              <button class="chat-send-btn">→</button>
+              <input type="text" id="chat-input" class="chat-input" placeholder="Escribir mensaje..." />
+              <button id="chat-send-btn" class="chat-send-btn">→</button>
+            </div>
+          </div>
+          <div class="chat-users-panel" id="chat-usuarios"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== FASE 7 · Documentos ==================== -->
+    <div id="docs-modal" class="docs-modal">
+      <div class="docs-modal-header">
+        <h2>📄 DOCUMENTOS ENTRE UNIDADES</h2>
+        <button id="docs-modal-close" class="docs-modal-close">✕</button>
+      </div>
+
+      <div class="docs-container">
+        <aside class="docs-sidebar">
+          <button class="docs-compose-btn" id="docs-compose-btn">
+            <span class="compose-icon">✎</span>
+            <span class="compose-text">Nuevo documento</span>
+          </button>
+          <div class="docs-folders">
+            <button class="docs-folder-btn active" data-folder="inbox">
+              <span class="folder-icon">📥</span>
+              <span class="folder-name">Entrada</span>
+              <span class="folder-count" id="inbox-count">0</span>
+            </button>
+            <button class="docs-folder-btn" data-folder="outbox">
+              <span class="folder-icon">📤</span>
+              <span class="folder-name">Salida</span>
+              <span class="folder-count" id="outbox-count">0</span>
+            </button>
+          </div>
+        </aside>
+
+        <div class="docs-main">
+          <div id="docs-list-view" class="docs-view active">
+            <div class="docs-list-header">
+              <h3 id="docs-list-title" class="list-title">Bandeja de Entrada</h3>
+              <input type="text" class="docs-search" id="docs-search" placeholder="Buscar documentos..." />
+            </div>
+            <div class="docs-list" id="docs-list"></div>
+          </div>
+
+          <div id="docs-detail-view" class="docs-view">
+            <div class="docs-detail-header">
+              <button class="docs-back-btn" id="docs-back-btn">← Volver</button>
+              <div class="docs-detail-actions">
+                <button class="docs-action-btn" id="docs-reply-btn" title="Responder">↩️</button>
+              </div>
+            </div>
+            <div class="docs-detail-content">
+              <div class="docs-detail-meta">
+                <div class="detail-row"><span class="detail-label">De (unidad):</span><span class="detail-value" id="detail-from">--</span></div>
+                <div class="detail-row"><span class="detail-label">Para (unidad):</span><span class="detail-value" id="detail-to">--</span></div>
+                <div class="detail-row"><span class="detail-label">Asunto:</span><span class="detail-value" id="detail-subject">--</span></div>
+                <div class="detail-row"><span class="detail-label">Fecha:</span><span class="detail-value" id="detail-date">--</span></div>
+              </div>
+              <div class="docs-detail-body" id="detail-body"></div>
             </div>
           </div>
 
-          <!-- Panel de Usuarios -->
-          <div class="chat-users-panel">
-            <div class="users-header">USUARIOS</div>
-            <div class="users-container">
-              <!-- Los usuarios irán aquí -->
+          <div id="docs-compose-view" class="docs-view">
+            <div class="docs-compose-header">
+              <h3>Nuevo documento</h3>
+              <button class="docs-close-compose-btn" id="docs-close-compose-btn">✕</button>
+            </div>
+            <div class="docs-compose-form">
+              <div class="form-group">
+                <label for="compose-remitente">De (unidad propia):</label>
+                <select id="compose-remitente" class="compose-input"></select>
+              </div>
+              <div class="form-group">
+                <label for="compose-destinatario">Para (unidad del bando):</label>
+                <select id="compose-destinatario" class="compose-input"></select>
+              </div>
+              <div class="form-group">
+                <label for="compose-tipo">Tipo:</label>
+                <select id="compose-tipo" class="compose-input"></select>
+              </div>
+              <div class="form-group">
+                <label for="compose-asunto">Asunto:</label>
+                <input type="text" id="compose-asunto" placeholder="Asunto del documento..." class="compose-input" />
+              </div>
+              <div id="compose-campos"></div>
+              <div class="form-actions">
+                <button id="docs-send-btn" class="docs-send-btn">Enviar</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ==================== FASE 7 · Boletines (jugadores) ==================== -->
+    <div id="boletines-modal" class="docs-modal boletines-modal">
+      <div class="docs-modal-header">
+        <h2>📢 BOLETINES DE LA DIRECCIÓN</h2>
+        <button id="boletines-modal-close" class="docs-modal-close">✕</button>
+      </div>
+      <div class="boletines-lista-container">
+        <div class="boletines-lista" id="boletines-lista"></div>
+      </div>
+    </div>
+
+    <!-- ==================== FASE 2 · Administración ==================== -->
+    <div id="admin-modal" class="admin-modal">
+      <div class="admin-header">
+        <h2 class="admin-title">⚙️ ADMINISTRACIÓN DEL SISTEMA</h2>
+        <button id="admin-close-btn" class="admin-close-btn">✕</button>
+      </div>
+
+      <div class="admin-container">
+        <div class="admin-nav">
+          <!-- Catálogos: definiciones reutilizables, no dependen de ningún ejercicio -->
+          <div class="admin-nav-grupo">
+            <span class="admin-nav-titulo">📚 Catálogos</span>
+            <div class="admin-nav-botones">
+              <button class="admin-tab-btn" data-table="unidades-base">🎖️ Plantillas de unidad</button>
+              <button class="admin-tab-btn" data-table="vehiculos-base">🛠️ Plantillas de vehículo</button>
+              <button class="admin-tab-btn" data-table="armamento">💥 Armamento</button>
+            </div>
+          </div>
+
+          <!-- Sistema: solo cuentas y el alta de ejercicios -->
+          <div class="admin-nav-grupo">
+            <span class="admin-nav-titulo">⚙️ Sistema</span>
+            <div class="admin-nav-botones">
+              <button class="admin-tab-btn active" data-table="usuarios">👤 Usuarios</button>
+              <button class="admin-tab-btn" data-table="ejercicios">🎯 Ejercicios</button>
+            </div>
+          </div>
+
+          <!-- Ejercicio: todo lo de acá se aplica sobre el ejercicio en contexto -->
+          <div class="admin-nav-grupo admin-nav-grupo-ejercicio">
+            <span class="admin-nav-titulo">🎯 Acciones del ejercicio</span>
+            <div class="admin-nav-botones">
+              <button class="admin-tab-btn" data-table="participantes">👥 Participantes</button>
+              <button class="admin-tab-btn" data-table="unidades">🚁 Unidades</button>
+              <button class="admin-tab-btn" data-table="vehiculos">🚙 Vehículos</button>
+              <button class="admin-tab-btn" data-table="asignaciones">🔗 Usuarios → Unidades</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-content">
+          <!-- Qué ejercicio se está modificando (solo en las secciones de ejercicio) -->
+          <div id="admin-contexto-ejercicio" class="admin-contexto"></div>
+
+          <div class="admin-table-view active" data-table="usuarios">
+            <div class="admin-actions">
+              <button id="usuarios-new-btn" class="admin-new-btn">+ Nuevo Usuario</button>
+              <input type="text" id="usuarios-filter" class="admin-filtro" placeholder="Buscar usuario, nombre o grado..." />
+              <select id="usuarios-rol-filter" class="admin-filtro">
+                <option value="">Todos los roles</option>
+                <option value="administrador">Administrador</option>
+                <option value="jugador">Jugador</option>
+              </select>
+            </div>
+            <table id="usuarios-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Usuario</th><th>Nombre</th><th>Grado</th><th>Rol</th><th>Creado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-view" data-table="unidades-base">
+            <div class="admin-actions">
+              <button id="unidades-base-new-btn" class="admin-new-btn">+ Nueva Plantilla</button>
+              <input type="text" id="unidades-base-filter" class="admin-filtro" placeholder="SIDC o nombre..." />
+              <input type="text" id="unidades-base-tipo-filter" class="admin-filtro" placeholder="Tipo" />
+              <input type="text" id="unidades-base-pais-filter" class="admin-filtro" placeholder="País" />
+            </div>
+            <table id="unidades-base-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Símbolo</th><th>SIDC</th><th>Nombre</th><th>Tipo</th><th>País</th><th>Cantidad</th><th>Creada</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-view" data-table="unidades">
+            <div class="admin-actions">
+              <button id="unidades-new-btn" class="admin-new-btn">+ Nueva Unidad</button>
+              <input type="text" id="unidades-filter" class="admin-filtro" placeholder="Nombre..." />
+              <input type="text" id="unidades-tipo-filter" class="admin-filtro" placeholder="Tipo" />
+              <input type="text" id="unidades-sidc-filter" class="admin-filtro" placeholder="SIDC" />
+            </div>
+            <table id="unidades-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Símbolo</th><th>Nombre</th><th>Bando</th><th>Plantilla SIDC</th><th>Tipo</th><th>Posición X</th><th>Posición Y</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-view" data-table="ejercicios">
+            <div class="admin-actions">
+              <button id="ejercicios-new-btn" class="admin-new-btn">+ Nuevo Ejercicio</button>
+              <input type="text" id="ejercicios-filter" class="admin-filtro" placeholder="Nombre o sala..." />
+              <select id="ejercicios-estado-filter" class="admin-filtro">
+                <option value="">Todos</option>
+                <option value="true">Activos</option>
+                <option value="false">Inactivos</option>
+              </select>
+            </div>
+            <table id="ejercicios-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Nombre</th><th>Sala</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <!-- Estas cuatro las pinta config-catalogos.js (delegación desde loadTable). -->
+          <div class="admin-table-view" data-table="armamento"></div>
+          <div class="admin-table-view" data-table="vehiculos-base"></div>
+          <div class="admin-table-view" data-table="vehiculos"></div>
+
+          <div class="admin-table-view" data-table="asignaciones">
+            <div class="admin-actions">
+              <button id="asignaciones-new-btn" class="admin-new-btn">+ Nueva Asignación</button>
+              <input type="text" id="asignaciones-filter" class="admin-filtro" placeholder="Usuario o unidad..." />
+            </div>
+            <table id="asignaciones-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Símbolo</th><th>Usuario</th><th>Unidad</th><th>Bando</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="admin-table-view" data-table="participantes">
+            <div class="admin-actions">
+              <button id="participantes-new-btn" class="admin-new-btn">+ Agregar Participante</button>
+              <input type="text" id="participantes-filter" class="admin-filtro" placeholder="Ejercicio o usuario..." />
+              <input type="text" id="participantes-bando-filter" class="admin-filtro" placeholder="Bando" />
+            </div>
+            <table id="participantes-table" class="admin-data-table">
+              <thead><tr><th>ID</th><th>Ejercicio</th><th>Usuario</th><th>Bando</th><th>Acciones</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-form-modal" class="admin-form-modal">
+      <div class="admin-form-content">
+        <div class="admin-form-header">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;">
+            <h3 id="admin-form-title"></h3>
+            <button id="admin-form-close-btn" class="admin-form-close">✕</button>
+          </div>
+        </div>
+        <form id="admin-form">
+          <div id="admin-form-fields"></div>
+          <div class="admin-form-actions">
+            <button type="submit" class="admin-submit-btn">Guardar</button>
+            <button type="button" id="admin-form-cancel-btn" class="admin-cancel-btn">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="admin-form-overlay" class="admin-form-overlay"></div>
+
+    <!-- ==================== Fase 8 · Overlay de pausa (jugadores) ====================
+         Cubre el 100% de la interfaz mientras el ejercicio está pausado. Solo se
+         muestra a jugadores: la dirección necesita seguir viendo el mapa y el
+         panel para poder reanudar. Ver actualizarOverlayPausa() en app.js. -->
+    <div id="pausa-overlay" class="pausa-overlay" hidden>
+      <div class="pausa-overlay-contenido">
+        <div class="pausa-overlay-icono">⏸</div>
+        <div class="pausa-overlay-titulo">EJERCICIO PAUSADO</div>
+        <div class="pausa-overlay-nota">Esperá a que la dirección reanude el ejercicio.</div>
+      </div>
     </div>
   </body>
 </html>

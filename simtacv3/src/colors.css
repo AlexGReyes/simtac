@@ -1,0 +1,105 @@
+/* ============================================================
+   Paleta de colores de SIMTAC — fuente única de verdad.
+   Todo color usado en styles.css / estilos-simtac.css se consume
+   desde acá (var(--sim-*)). Para cambiar un color de la interfaz,
+   se modifica su valor en este archivo — no se agregan colores
+   sueltos en otros .css.
+
+   Las variables "-rgb" existen para poder usar el color con canal
+   alfa: rgba(var(--sim-oro-rgb), 0.3)
+   ============================================================ */
+
+:root {
+  /* --- Dorado (acento principal) --- */
+  --sim-oro: #d4af37;
+  --sim-oro-rgb: 212, 175, 55;
+  --sim-oro-oscuro: #c49b2e;
+  --sim-oro-brillo: #ffd700;
+  --sim-oro-brillo-rgb: 255, 215, 0;
+  --sim-oro-crema: #f5e6c8;
+  --sim-amarillo-resalte: #ffeb3b;
+
+  /* --- Cian (información / secundario) --- */
+  --sim-cian: #a0d4e8;
+  --sim-cian-rgb: 160, 212, 232;
+
+  /* --- Verde (éxito / estado activo) --- */
+  --sim-verde: #4cff33;
+  --sim-verde-rgb: 76, 255, 51;
+
+  /* --- Rojo (alerta / peligro) --- */
+  --sim-rojo: #ff6b6b;
+  --sim-rojo-rgb: 255, 107, 107;
+  --sim-rojo-claro: #ffb3b3;
+
+  /* --- Ámbar (aviso / advertencia) --- */
+  --sim-ambar: #ffc864;
+  --sim-ambar-rgb: 255, 200, 100;
+
+  /* --- Texto y neutros --- */
+  --sim-texto: #e8e8e8;
+  --sim-texto-rgb: 232, 232, 232;
+  --sim-blanco: #ffffff;
+  --sim-blanco-rgb: 255, 255, 255;
+  --sim-negro-rgb: 0, 0, 0;
+  --sim-neutral: #cfcfcf;
+  --sim-neutral-rgb: 200, 200, 200;
+  --sim-gris: #777777;
+
+  /* --- Fondos oscuros: verde militar oscuro (misma familia que
+       --sim-panel-*), no negro-azulado --- */
+  --sim-fondo: rgba(19, 31, 24, 0.94);
+  --sim-fondo-rgb: 19, 31, 24;
+  --sim-fondo-solido: #131f18;
+
+  /* --- Bordes --- */
+  --sim-borde: rgba(212, 175, 55, 0.35);
+  --sim-borde-suave: rgba(232, 232, 232, 0.12);
+
+  /* --- Panel militar (login, chat, menús, modales de admin) --- */
+  --sim-panel-claro: #556b5f;
+  --sim-panel-claro-rgb: 85, 107, 95;
+  --sim-panel-medio: #4a5a52;
+  --sim-panel-medio-rgb: 74, 90, 82;
+  --sim-panel-oscuro: #405048;
+  --sim-panel-oscuro-rgb: 64, 80, 72;
+
+  /* --- Gradiente de fondo exclusivo de la pantalla de login: el extremo
+       oscuro homologado con --sim-fondo-solido (el mismo verde "serio" que
+       usan los modales), para no tener dos negros verdosos casi iguales. --- */
+  --sim-login-grad-1: #3a4a3a;
+  --sim-login-grad-2: #2a3a32;
+  --sim-login-grad-3: var(--sim-fondo-solido);
+
+  /* --- Gradiente radial de la pantalla de selección de ejercicio --- */
+  --sim-ejercicio-grad-1: #1e3226;
+  --sim-ejercicio-grad-2: #0a1310;
+
+  /* --- Colores de bando: una sola tonalidad por bando en toda la app --- */
+  --sim-bando-azul: #6496ff;
+  --sim-bando-azul-rgb: 100, 150, 255;
+  --sim-bando-rojo: #ff6464;
+  --sim-bando-rojo-rgb: 255, 100, 100;
+  --sim-bando-verde: #64ff64;
+  --sim-bando-verde-rgb: 100, 255, 100;
+  --sim-bando-independiente: var(--sim-ambar);
+  --sim-bando-independiente-rgb: var(--sim-ambar-rgb);
+  --sim-bando-neutral: var(--sim-neutral);
+
+  /* --- Estados de cuenta/entidad (admin) --- */
+  --sim-estado-activo: #4caf50;
+  --sim-estado-activo-rgb: 76, 175, 80;
+  --sim-estado-inactivo: #f44336;
+  --sim-estado-inactivo-rgb: 244, 67, 54;
+
+  /* --- Colores puntuales --- */
+  --sim-violeta: #c8a2ff;       /* log de combate: retirada */
+  --sim-verde-tierra: #b8e0a0;  /* chip "tierra" en catálogo */
+  --sim-verde-tierra-rgb: 140, 180, 120;
+
+  /* --- Mapa (mapa.js lee estos valores en tiempo de ejecución con
+       getComputedStyle, porque OpenLayers dibuja en canvas y no puede
+       consumir var() directamente) --- */
+  --sim-anillo-vision-rgb: 90, 170, 255;   /* anillo de rango de visión */
+  --sim-anillo-umbral-rgb: 255, 159, 10;   /* anillo de umbral de combate */
+}

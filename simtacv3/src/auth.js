@@ -1,117 +1,36 @@
-// Módulo de autenticación - Llamadas a la API
+// Autenticación. Capa fina sobre el cliente HTTP: el manejo de tokens, el
+// refresh y los errores viven en api.js / session.js.
+import Api from './api.js';
 import Session from './session.js';
 
-const API_BASE = 'http://node.localhost';
-
 const Auth = {
-  async register(usuario, password, nombre, grado = null) {
-    try {
-      const payload = { usuario, password, nombre };
-      if (grado) payload.grado = grado;
-
-      const response = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error en registro');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  register(usuario, password, nombre, grado = null) {
+    return Api.auth.register(usuario, password, nombre, grado);
   },
 
-  async login(usuario, password) {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuario, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Credenciales inválidas');
-      }
-
-      // Guardar token y usuario
-      Session.setToken(data.token);
-      Session.setUser(data.usuario);
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  /** Guarda token + refreshToken + usuario (incluye ejercicios_asignados). */
+  login(usuario, password) {
+    return Api.auth.login(usuario, password);
   },
 
-  async getMe() {
-    try {
-      const token = Session.getToken();
-      if (!token) throw new Error('No hay sesión activa');
-
-      const response = await fetch(`${API_BASE}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al validar sesión');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  getMe() {
+    return Api.auth.me();
   },
 
-  async getUnidadesMias() {
-    try {
-      const token = Session.getToken();
-      if (!token) throw new Error('No hay sesión activa');
-
-      const response = await fetch(`${API_BASE}/unidades/mias`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al obtener unidades');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  /**
+   * `ejercicios_asignados` NO viaja en el JWT: se relee de la base en cada
+   * login/refresh porque la asignación puede cambiar durante las 8 h del token.
+   */
+  ejerciciosDisponibles() {
+    return Api.ejercicios.disponibles();
   },
 
-  async getUsuarios() {
-    try {
-      const token = Session.getToken();
-      if (!token) throw new Error('No hay sesión activa');
+  getUnidadesMias() {
+    return Api.unidades.mias();
+  },
 
-      const response = await fetch(`${API_BASE}/usuarios`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al obtener usuarios');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
+  getUsuarios() {
+    return Api.usuarios.listar();
   },
 
   logout() {

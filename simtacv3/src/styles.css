@@ -4,8 +4,8 @@
   line-height: 24px;
   font-weight: 400;
 
-  color: #e8e8e8;
-  background-color: #4a5a68;
+  color: var(--sim-texto);
+  background-color: var(--sim-fondo-solido);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -32,7 +32,7 @@ body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #3a4a3a 0%, #2a3a32 50%, #1a2a22 100%);
+  background: linear-gradient(135deg, var(--sim-login-grad-1) 0%, var(--sim-login-grad-2) 50%, var(--sim-login-grad-3) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -52,10 +52,10 @@ body {
   width: 100%;
   max-width: 420px;
   padding: 40px;
-  background: linear-gradient(180deg, rgba(74, 90, 82, 0.95) 0%, rgba(64, 80, 72, 0.98) 100%);
-  border: 2px solid #d4af37;
+  background: linear-gradient(180deg, rgba(var(--sim-panel-medio-rgb), 0.95) 0%, rgba(var(--sim-panel-oscuro-rgb), 0.98) 100%);
+  border: 2px solid var(--sim-oro);
   border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 215, 0, 0.15);
+  box-shadow: 0 20px 60px rgba(var(--sim-negro-rgb), 0.5), inset 0 1px 0 rgba(var(--sim-oro-brillo-rgb), 0.15);
 }
 
 .login-header {
@@ -63,20 +63,28 @@ body {
   margin-bottom: 32px;
 }
 
+.login-logo {
+  width: 211px;
+  height: 211px;
+  margin: 0 auto 12px;
+  display: block;
+  filter: drop-shadow(0 4px 10px rgba(var(--sim-negro-rgb), 0.5)) drop-shadow(0 0 14px rgba(var(--sim-oro-rgb), 0.35));
+}
+
 .login-title {
   font-size: 36px;
   font-weight: 400;
-  color: #d4af37;
+  color: var(--sim-oro);
   margin: 0;
   letter-spacing: 4px;
   text-transform: uppercase;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(212, 175, 55, 0.3);
+  text-shadow: 0 2px 4px rgba(var(--sim-negro-rgb), 0.5), 0 0 8px rgba(var(--sim-oro-rgb), 0.3);
   font-family: 'Unica One', cursive;
 }
 
 .login-subtitle {
   font-size: 12px;
-  color: rgba(212, 175, 55, 0.8);
+  color: rgba(var(--sim-oro-rgb), 0.8);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin: 8px 0 0 0;
@@ -88,7 +96,7 @@ body {
   display: flex;
   gap: 0;
   margin-bottom: 24px;
-  border-bottom: 2px solid rgba(212, 175, 55, 0.2);
+  border-bottom: 2px solid rgba(var(--sim-oro-rgb), 0.2);
 }
 
 .login-tab-btn {
@@ -96,7 +104,7 @@ body {
   padding: 12px 16px;
   background: transparent;
   border: none;
-  color: rgba(212, 175, 55, 0.6);
+  color: rgba(var(--sim-oro-rgb), 0.6);
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
@@ -108,12 +116,12 @@ body {
 }
 
 .login-tab-btn:hover {
-  color: #d4af37;
+  color: var(--sim-oro);
 }
 
 .login-tab-btn.active {
-  color: #d4af37;
-  border-bottom-color: #d4af37;
+  color: var(--sim-oro);
+  border-bottom-color: var(--sim-oro);
 }
 
 .login-form {
@@ -135,16 +143,16 @@ body {
 .form-group label {
   font-size: 11px;
   font-weight: 700;
-  color: #d4af37;
+  color: var(--sim-oro);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .form-group input {
   padding: 12px 14px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 13px;
   outline: none;
@@ -153,20 +161,20 @@ body {
 }
 
 .form-group input::placeholder {
-  color: rgba(212, 175, 55, 0.4);
+  color: rgba(var(--sim-oro-rgb), 0.4);
 }
 
 .form-group input:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.15);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
+  box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.15);
 }
 
 .login-btn {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #d4af37 0%, #c49b2e 100%);
+  background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
   border: none;
-  color: #0f1f2e;
+  color: var(--sim-fondo-solido);
   border-radius: 4px;
   font-size: 12px;
   font-weight: 700;
@@ -178,7 +186,7 @@ body {
 }
 
 .login-btn:hover {
-  box-shadow: 0 0 16px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 16px rgba(var(--sim-oro-rgb), 0.3);
   transform: translateY(-1px);
 }
 
@@ -193,9 +201,9 @@ body {
 
 .login-error {
   font-size: 12px;
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  color: var(--sim-rojo);
+  background: rgba(var(--sim-rojo-rgb), 0.1);
+  border: 1px solid rgba(var(--sim-rojo-rgb), 0.3);
   padding: 8px 12px;
   border-radius: 4px;
   min-height: 20px;
@@ -206,7 +214,7 @@ body {
 
 .login-loading {
   font-size: 12px;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   text-align: center;
   padding: 8px;
   animation: pulse 1.5s ease-in-out infinite;
@@ -235,13 +243,13 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: linear-gradient(180deg, #556b5f 0%, #4a5a52 100%);
-  color: #e8e8e8;
+  background: linear-gradient(180deg, var(--sim-panel-claro) 0%, var(--sim-panel-oscuro) 100%);
+  color: var(--sim-texto);
   padding: 0 20px;
   height: 70px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(var(--sim-negro-rgb), 0.08);
   flex-shrink: 0;
-  border-bottom: 2px solid #d4af37;
+  border-bottom: 2px solid var(--sim-oro);
 }
 
 .user-section {
@@ -254,8 +262,8 @@ body {
 
 .admin-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -270,15 +278,15 @@ body {
 }
 
 .admin-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
+  box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.2);
 }
 
 .logout-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -292,9 +300,9 @@ body {
 }
 
 .logout-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
+  box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.2);
 }
 
 .avatar {
@@ -303,12 +311,20 @@ body {
   justify-content: center;
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-  border: 2px solid #ffd700;
+  background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
+  border: 2px solid var(--sim-oro-brillo);
   border-radius: 50%;
   font-weight: bold;
   font-size: 14px;
-  color: #0f1f2e;
+  color: var(--sim-fondo-solido);
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
 .user-info {
@@ -319,13 +335,13 @@ body {
 .username {
   font-size: 14px;
   font-weight: 600;
-  color: #e8e8e8;
+  color: var(--sim-texto);
   margin-bottom: 2px;
 }
 
 .role {
   font-size: 11px;
-  color: #d4af37;
+  color: var(--sim-oro);
 }
 
 .system-section {
@@ -341,16 +357,16 @@ body {
 .system-name {
   font-size: 28px;
   font-weight: 400;
-  color: #d4af37;
+  color: var(--sim-oro);
   letter-spacing: 4px;
   text-transform: uppercase;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 8px rgba(212, 175, 55, 0.3);
+  text-shadow: 0 2px 4px rgba(var(--sim-negro-rgb), 0.5), 0 0 8px rgba(var(--sim-oro-rgb), 0.3);
   font-family: 'Unica One', cursive;
 }
 
 .system-subtitle {
   font-size: 11px;
-  color: rgba(212, 175, 55, 0.8);
+  color: rgba(var(--sim-oro-rgb), 0.8);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   font-weight: 400;
@@ -373,15 +389,15 @@ body {
   align-items: center;
   gap: 3px;
   padding: 8px 12px;
-  background-color: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background-color: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 3px;
 }
 
 .clock-label {
   font-size: 8px;
   font-weight: 700;
-  color: #d4af37;
+  color: var(--sim-oro);
   letter-spacing: 1.5px;
   text-transform: uppercase;
 }
@@ -390,20 +406,20 @@ body {
   font-size: 18px;
   font-weight: 400;
   font-family: 'Courier New', monospace;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   letter-spacing: 1px;
 }
 
 .clock-date {
   font-size: 10px;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   font-family: 'Courier New', monospace;
 }
 
 .clock-divider {
   width: 1px;
   height: 45px;
-  background: linear-gradient(to bottom, transparent, rgba(212, 175, 55, 0.4), transparent);
+  background: linear-gradient(to bottom, transparent, rgba(var(--sim-oro-rgb), 0.4), transparent);
 }
 
 main {
@@ -423,8 +439,8 @@ main {
   position: absolute;
   bottom: 10px;
   right: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: #e8e8e8;
+  background-color: rgba(var(--sim-negro-rgb), 0.5);
+  color: var(--sim-texto);
   padding: 12px 16px;
   border-radius: 4px;
   font-family: monospace;
@@ -432,8 +448,8 @@ main {
   z-index: 1000;
   pointer-events: none;
   min-width: 250px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  box-shadow: 0 2px 8px rgba(var(--sim-negro-rgb), 0.1);
 }
 
 .coordinates-panel > div {
@@ -443,32 +459,6 @@ main {
 
 .coordinates-panel > div:last-child {
   margin-bottom: 0;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: 0.75s;
-}
-
-.logo.tauri:hover {
-  filter: drop-shadow(0 0 2em #24c8db);
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-
-a:hover {
-  color: #535bf2;
 }
 
 h1 {
@@ -483,10 +473,10 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
-  color: #0f0f0f;
-  background-color: #ffffff;
+  color: var(--sim-fondo-solido);
+  background-color: var(--sim-blanco);
   transition: border-color 0.25s;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 2px rgba(var(--sim-negro-rgb), 0.2);
 }
 
 button {
@@ -494,20 +484,16 @@ button {
 }
 
 button:hover {
-  border-color: #396cd8;
+  border-color: var(--sim-oro);
 }
 button:active {
-  border-color: #396cd8;
-  background-color: #e8e8e8;
+  border-color: var(--sim-oro);
+  background-color: var(--sim-texto);
 }
 
 input,
 button {
   outline: none;
-}
-
-#greet-input {
-  margin-right: 5px;
 }
 
 /* Botón de Panel de Unidad */
@@ -518,9 +504,9 @@ button {
   width: 70px;
   height: 70px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #d4af37 0%, #c49b2e 100%);
-  color: #4a5a68;
-  border: 3px solid #f5e6c8;
+  background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
+  color: var(--sim-fondo-solido);
+  border: 3px solid var(--sim-oro-crema);
   font-weight: bold;
   font-size: 24px;
   cursor: pointer;
@@ -530,13 +516,13 @@ button {
   justify-content: center;
   gap: 4px;
   z-index: 999;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  box-shadow: 0 4px 12px rgba(var(--sim-oro-rgb), 0.25);
   transition: all 0.3s ease;
 }
 
 .unit-panel-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
+  box-shadow: 0 6px 16px rgba(var(--sim-oro-rgb), 0.35);
 }
 
 .unit-panel-btn:active {
@@ -562,7 +548,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.5);
   z-index: 998;
   opacity: 0;
   visibility: hidden;
@@ -583,7 +569,7 @@ button {
   bottom: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, #556b5f 0%, #4a5a52 100%);
+  background: linear-gradient(180deg, var(--sim-panel-claro) 0%, var(--sim-panel-medio) 100%);
   border: none;
   border-radius: 0;
   box-shadow: none;
@@ -609,13 +595,13 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   flex-shrink: 0;
 }
 
 .modal-title {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 18px;
   font-weight: 700;
   margin: 0;
@@ -626,8 +612,8 @@ button {
 
 .modal-close {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -641,16 +627,16 @@ button {
 }
 
 .modal-close:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 /* Pestañas */
 .modal-tabs {
   display: flex;
   gap: 0;
-  background: rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   flex-shrink: 0;
   overflow-x: auto;
 }
@@ -660,7 +646,7 @@ button {
   padding: 12px 16px;
   background: transparent;
   border: none;
-  color: #d4af37;
+  color: var(--sim-oro);
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
@@ -673,14 +659,14 @@ button {
 }
 
 .tab-btn:hover {
-  color: #d4af37;
-  background: rgba(212, 175, 55, 0.1);
+  color: var(--sim-oro);
+  background: rgba(var(--sim-oro-rgb), 0.1);
 }
 
 .tab-btn.active {
-  color: #d4af37;
-  border-bottom-color: #d4af37;
-  background: rgba(212, 175, 55, 0.15);
+  color: var(--sim-oro);
+  border-bottom-color: var(--sim-oro);
+  background: rgba(var(--sim-oro-rgb), 0.15);
 }
 
 /* Contenido del Modal */
@@ -688,8 +674,8 @@ button {
   flex: 1;
   overflow: hidden;
   padding: 0;
-  color: #e8e8e8;
-  background: rgba(0, 0, 0, 0.2);
+  color: var(--sim-texto);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .tab-pane {
@@ -719,16 +705,16 @@ button {
 }
 
 .modal-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .modal-content::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 4px;
 }
 
 .modal-content::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
+  background: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 /* Menú Lateral de Unidad - Minimalista */
@@ -738,8 +724,8 @@ button {
   top: 70px;
   width: 70px;
   height: auto;
-  background: linear-gradient(180deg, rgba(74, 90, 82, 0.95) 0%, rgba(64, 80, 72, 0.98) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(180deg, rgba(var(--sim-panel-medio-rgb), 0.95) 0%, rgba(var(--sim-panel-oscuro-rgb), 0.98) 100%);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
   border-left: none;
   border-radius: 0 8px 8px 0;
   z-index: 900;
@@ -751,7 +737,7 @@ button {
   flex-direction: column;
   padding: 20px 10px;
   gap: 12px;
-  box-shadow: 2px 4px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 2px 4px 16px rgba(var(--sim-negro-rgb), 0.3);
 }
 
 .unit-menu.active {
@@ -771,9 +757,9 @@ button {
   width: 50px;
   height: 50px;
   border-radius: 4px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(160, 212, 232, 0.08) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  color: #d4af37;
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.15) 0%, rgba(var(--sim-cian-rgb), 0.08) 100%);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.4);
+  color: var(--sim-oro);
   font-size: 22px;
   cursor: pointer;
   display: flex;
@@ -785,9 +771,9 @@ button {
 }
 
 .unit-action:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.3) 0%, rgba(160, 212, 232, 0.15) 100%);
-  border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.3) 0%, rgba(var(--sim-cian-rgb), 0.15) 100%);
+  border-color: var(--sim-oro);
+  box-shadow: 0 0 12px rgba(var(--sim-oro-rgb), 0.3);
   transform: translateX(3px);
 }
 
@@ -803,16 +789,16 @@ button {
   top: 50%;
   transform: translateY(-50%);
   margin-left: 8px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #a0d4e8;
+  background: rgba(var(--sim-negro-rgb), 0.85);
+  color: var(--sim-cian);
   padding: 6px 10px;
   border-radius: 4px;
   font-size: 11px;
   white-space: nowrap;
   z-index: 1000;
-  border: 1px solid rgba(212, 175, 55, 0.6);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.6);
   pointer-events: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(var(--sim-negro-rgb), 0.4);
 }
 
 /* Chat Minimalista */
@@ -820,7 +806,9 @@ button {
   position: fixed;
   bottom: 20px;
   left: 20px;
-  z-index: 850;
+  /* Por encima de panel-entidad/panel-direccion (950/960): al abrir el chat,
+     que se vea completo en vez de quedar tapado por esos paneles flotantes. */
+  z-index: 970;
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
 }
 
@@ -842,18 +830,18 @@ button {
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: linear-gradient(135deg, rgba(74, 90, 82, 0.9) 0%, rgba(64, 80, 72, 0.95) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.35);
+  background: linear-gradient(135deg, rgba(var(--sim-panel-medio-rgb), 0.9) 0%, rgba(var(--sim-panel-oscuro-rgb), 0.95) 100%);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.35);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 8px rgba(var(--sim-negro-rgb), 0.25);
 }
 
 .chat-header-mini:hover {
-  background: linear-gradient(135deg, rgba(85, 107, 95, 0.95) 0%, rgba(74, 90, 82, 1) 100%);
-  border-color: #d4af37;
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
+  background: linear-gradient(135deg, rgba(var(--sim-panel-claro-rgb), 0.95) 0%, rgba(var(--sim-panel-medio-rgb), 1) 100%);
+  border-color: var(--sim-oro);
+  box-shadow: 0 4px 12px rgba(var(--sim-oro-rgb), 0.25);
 }
 
 .chat-icon {
@@ -861,7 +849,7 @@ button {
 }
 
 .chat-title-mini {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -874,8 +862,8 @@ button {
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: #d4af37;
-  color: #ffffff;
+  background: var(--sim-oro);
+  color: var(--sim-blanco);
   font-size: 11px;
   font-weight: 700;
   border-radius: 50%;
@@ -888,10 +876,10 @@ button {
   left: 20px;
   width: 600px;
   height: 400px;
-  background: linear-gradient(135deg, rgba(74, 90, 82, 0.95) 0%, rgba(64, 80, 72, 0.98) 100%);
-  border: 2px solid #d4af37;
+  background: linear-gradient(135deg, rgba(var(--sim-panel-medio-rgb), 0.95) 0%, rgba(var(--sim-panel-oscuro-rgb), 0.98) 100%);
+  border: 2px solid var(--sim-oro);
   border-radius: 8px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 215, 0, 0.15);
+  box-shadow: 0 12px 32px rgba(var(--sim-negro-rgb), 0.3), inset 0 1px 0 rgba(var(--sim-oro-brillo-rgb), 0.15);
   display: flex;
   flex-direction: column;
   opacity: 0;
@@ -914,13 +902,13 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 14px 18px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   flex-shrink: 0;
 }
 
 .chat-title {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 14px;
   font-weight: 700;
   margin: 0;
@@ -930,8 +918,8 @@ button {
 
 .chat-minimize-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -945,8 +933,8 @@ button {
 }
 
 .chat-minimize-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 /* Chat Content */
@@ -962,8 +950,8 @@ button {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.2);
-  border-right: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(var(--sim-negro-rgb), 0.2);
+  border-right: 1px solid rgba(var(--sim-oro-rgb), 0.15);
 }
 
 .messages-container {
@@ -980,16 +968,16 @@ button {
 }
 
 .messages-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 3px;
 }
 
 .messages-container::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
+  background: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 /* Chat Input Area */
@@ -997,16 +985,16 @@ button {
   display: flex;
   gap: 6px;
   padding: 10px 14px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(var(--sim-negro-rgb), 0.2);
+  border-top: 1px solid rgba(var(--sim-oro-rgb), 0.15);
   flex-shrink: 0;
 }
 
 .chat-input {
   flex: 1;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   padding: 8px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -1014,18 +1002,18 @@ button {
 }
 
 .chat-input::placeholder {
-  color: rgba(212, 175, 55, 0.5);
+  color: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 .chat-input:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
 }
 
 .chat-send-btn {
-  background: rgba(212, 175, 55, 0.2);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1039,8 +1027,8 @@ button {
 }
 
 .chat-send-btn:hover {
-  background: rgba(212, 175, 55, 0.3);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.3);
+  border-color: var(--sim-oro);
 }
 
 .chat-send-btn:active {
@@ -1052,14 +1040,14 @@ button {
   width: 120px;
   display: flex;
   flex-direction: column;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(var(--sim-negro-rgb), 0.15);
 }
 
 .users-header {
   padding: 10px 12px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.15);
-  color: #a0d4e8;
+  background: linear-gradient(180deg, rgba(var(--sim-negro-rgb), 0.2) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.15);
+  color: var(--sim-cian);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
@@ -1078,11 +1066,11 @@ button {
 }
 
 .users-container::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .users-container::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 3px;
 }
 
@@ -1092,7 +1080,7 @@ button {
   height: 100%;
   width: 100%;
   gap: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
   flex: 1;
   overflow: hidden;
 }
@@ -1100,8 +1088,8 @@ button {
 /* Sidebar de Carpetas */
 .docs-sidebar {
   width: 180px;
-  background: rgba(0, 0, 0, 0.3);
-  border-right: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border-right: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   display: flex;
   flex-direction: column;
   padding: 12px 0;
@@ -1113,9 +1101,9 @@ button {
 .docs-compose-btn {
   margin: 0 10px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(160, 212, 232, 0.15) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  color: #d4af37;
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.25) 0%, rgba(var(--sim-cian-rgb), 0.15) 100%);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.4);
+  color: var(--sim-oro);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -1130,9 +1118,9 @@ button {
 }
 
 .docs-compose-btn:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.4) 0%, rgba(160, 212, 232, 0.25) 100%);
-  border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.4) 0%, rgba(var(--sim-cian-rgb), 0.25) 100%);
+  border-color: var(--sim-oro);
+  box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.2);
 }
 
 .compose-icon {
@@ -1156,7 +1144,7 @@ button {
   padding: 10px 12px;
   background: transparent;
   border: 1px solid transparent;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   border-radius: 4px;
   cursor: pointer;
   display: flex;
@@ -1172,14 +1160,14 @@ button {
 }
 
 .docs-folder-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
-  color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.1);
+  color: var(--sim-oro);
 }
 
 .docs-folder-btn.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  color: var(--sim-oro);
+  border-color: rgba(var(--sim-oro-rgb), 0.3);
 }
 
 .folder-icon {
@@ -1192,8 +1180,8 @@ button {
 }
 
 .folder-count {
-  background: rgba(212, 175, 55, 0.3);
-  color: #e8e8e8;
+  background: rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-texto);
   padding: 2px 6px;
   border-radius: 3px;
   font-size: 10px;
@@ -1208,7 +1196,7 @@ button {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(var(--sim-negro-rgb), 0.15);
   width: 100%;
   height: 100%;
 }
@@ -1229,13 +1217,13 @@ button {
 /* Vista Lista */
 .docs-list-header {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.08) 0%, transparent 100%);
   flex-shrink: 0;
 }
 
 .list-title {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 14px;
   font-weight: 700;
   margin: 0 0 8px 0;
@@ -1246,9 +1234,9 @@ button {
 .docs-search {
   width: 100%;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 12px;
   outline: none;
@@ -1256,13 +1244,13 @@ button {
 }
 
 .docs-search::placeholder {
-  color: rgba(212, 175, 55, 0.5);
+  color: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 .docs-search:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.15);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
+  box-shadow: 0 0 6px rgba(var(--sim-oro-rgb), 0.15);
 }
 
 /* Lista de Documentos */
@@ -1272,7 +1260,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--sim-negro-rgb), 0.1);
 }
 
 .docs-list::-webkit-scrollbar {
@@ -1280,22 +1268,22 @@ button {
 }
 
 .docs-list::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .docs-list::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 4px;
 }
 
 .docs-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(212, 175, 55, 0.5);
+  background: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 /* Items de Documento */
 .docs-item {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.1);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -1307,12 +1295,12 @@ button {
 }
 
 .docs-item:hover {
-  background: rgba(212, 175, 55, 0.1);
+  background: rgba(var(--sim-oro-rgb), 0.1);
 }
 
 .docs-item.active {
-  background: rgba(212, 175, 55, 0.2);
-  border-left: 3px solid #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  border-left: 3px solid var(--sim-oro);
 }
 
 .docs-item-header {
@@ -1323,20 +1311,20 @@ button {
 
 .docs-item-sender {
   font-weight: 600;
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 12px;
   flex: 1;
 }
 
 .docs-item-date {
   font-size: 11px;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   white-space: nowrap;
 }
 
 .docs-item-subject {
   font-size: 12px;
-  color: #e8e8e8;
+  color: var(--sim-texto);
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1345,7 +1333,7 @@ button {
 
 .docs-item-preview {
   font-size: 11px;
-  color: rgba(232, 232, 232, 0.6);
+  color: rgba(var(--sim-texto-rgb), 0.6);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1357,15 +1345,15 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.08) 0%, transparent 100%);
   flex-shrink: 0;
 }
 
 .docs-back-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   padding: 6px 12px;
   border-radius: 4px;
   font-size: 12px;
@@ -1376,8 +1364,8 @@ button {
 }
 
 .docs-back-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 .docs-detail-actions {
@@ -1387,8 +1375,8 @@ button {
 
 .docs-action-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1402,15 +1390,15 @@ button {
 }
 
 .docs-action-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 .docs-detail-content {
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--sim-negro-rgb), 0.1);
 }
 
 .docs-detail-content::-webkit-scrollbar {
@@ -1418,17 +1406,17 @@ button {
 }
 
 .docs-detail-content::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .docs-detail-content::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 4px;
 }
 
 .docs-detail-meta {
-  background: rgba(212, 175, 55, 0.1);
-  border: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-oro-rgb), 0.1);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 16px;
@@ -1447,24 +1435,24 @@ button {
 
 .detail-label {
   font-weight: 700;
-  color: #d4af37;
+  color: var(--sim-oro);
   min-width: 60px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .detail-value {
-  color: #e8e8e8;
+  color: var(--sim-texto);
   flex: 1;
   word-break: break-word;
 }
 
 .docs-detail-body {
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(212, 175, 55, 0.15);
+  background: rgba(var(--sim-negro-rgb), 0.15);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.15);
   border-radius: 4px;
   padding: 14px;
-  color: #e8e8e8;
+  color: var(--sim-texto);
   line-height: 1.6;
   font-size: 12px;
   white-space: pre-wrap;
@@ -1477,13 +1465,13 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.08) 0%, transparent 100%);
   flex-shrink: 0;
 }
 
 .docs-compose-header h3 {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 14px;
   font-weight: 700;
   margin: 0;
@@ -1493,8 +1481,8 @@ button {
 
 .docs-close-compose-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1508,8 +1496,8 @@ button {
 }
 
 .docs-close-compose-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 .docs-compose-form {
@@ -1519,7 +1507,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(var(--sim-negro-rgb), 0.1);
 }
 
 .docs-compose-form::-webkit-scrollbar {
@@ -1527,11 +1515,11 @@ button {
 }
 
 .docs-compose-form::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.2);
 }
 
 .docs-compose-form::-webkit-scrollbar-thumb {
-  background: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 4px;
 }
 
@@ -1544,16 +1532,16 @@ button {
 .form-group label {
   font-size: 11px;
   font-weight: 700;
-  color: #d4af37;
+  color: var(--sim-oro);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .compose-input {
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 12px;
   outline: none;
@@ -1562,20 +1550,20 @@ button {
 }
 
 .compose-input::placeholder {
-  color: rgba(212, 175, 55, 0.5);
+  color: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 .compose-input:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.15);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
+  box-shadow: 0 0 6px rgba(var(--sim-oro-rgb), 0.15);
 }
 
 .compose-textarea {
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 12px;
   outline: none;
@@ -1587,13 +1575,13 @@ button {
 }
 
 .compose-textarea::placeholder {
-  color: rgba(212, 175, 55, 0.5);
+  color: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 .compose-textarea:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.15);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
+  box-shadow: 0 0 6px rgba(var(--sim-oro-rgb), 0.15);
 }
 
 .form-actions {
@@ -1619,12 +1607,12 @@ button {
 }
 
 .docs-send-btn {
-  background: linear-gradient(135deg, #d4af37 0%, #c49b2e 100%);
-  color: #0f1f2e;
+  background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
+  color: var(--sim-fondo-solido);
 }
 
 .docs-send-btn:hover {
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 12px rgba(var(--sim-oro-rgb), 0.3);
   transform: translateY(-1px);
 }
 
@@ -1634,13 +1622,13 @@ button {
 
 .docs-draft-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
 }
 
 .docs-draft-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 /* === ADMINISTRACIÓN === */
@@ -1650,7 +1638,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(180deg, #556b5f 0%, #4a5a52 100%);
+  background: linear-gradient(180deg, var(--sim-panel-claro) 0%, var(--sim-panel-medio) 100%);
   z-index: 9999;
   display: none;
   flex-direction: column;
@@ -1666,13 +1654,13 @@ button {
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   flex-shrink: 0;
 }
 
 .admin-title {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 18px;
   font-weight: 700;
   margin: 0;
@@ -1683,8 +1671,8 @@ button {
 
 .admin-close-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -1695,8 +1683,8 @@ button {
 }
 
 .admin-close-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 .admin-container {
@@ -1708,8 +1696,8 @@ button {
 
 .admin-nav {
   width: 200px;
-  background: rgba(0, 0, 0, 0.3);
-  border-right: 1px solid rgba(212, 175, 55, 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border-right: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   display: flex;
   flex-direction: column;
   padding: 12px 0;
@@ -1723,7 +1711,7 @@ button {
   padding: 12px 14px;
   background: transparent;
   border: 1px solid transparent;
-  color: #a0d4e8;
+  color: var(--sim-cian);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -1733,14 +1721,14 @@ button {
 }
 
 .admin-tab-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
-  color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.1);
+  color: var(--sim-oro);
 }
 
 .admin-tab-btn.active {
-  background: rgba(212, 175, 55, 0.2);
-  color: #d4af37;
-  border-color: rgba(212, 175, 55, 0.3);
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  color: var(--sim-oro);
+  border-color: rgba(var(--sim-oro-rgb), 0.3);
 }
 
 .admin-content {
@@ -1753,10 +1741,10 @@ button {
 
 .admin-table-description {
   padding: 12px 16px;
-  background: rgba(160, 212, 232, 0.1);
-  border-bottom: 1px solid rgba(160, 212, 232, 0.2);
-  border-left: 3px solid #a0d4e8;
-  color: #a0d4e8;
+  background: rgba(var(--sim-cian-rgb), 0.1);
+  border-bottom: 1px solid rgba(var(--sim-cian-rgb), 0.2);
+  border-left: 3px solid var(--sim-cian);
+  color: var(--sim-cian);
   font-size: 12px;
   line-height: 1.5;
   flex-shrink: 0;
@@ -1775,8 +1763,8 @@ button {
 
 .admin-filter-bar {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(160, 212, 232, 0.15);
-  background: rgba(160, 212, 232, 0.05);
+  border-bottom: 1px solid rgba(var(--sim-cian-rgb), 0.15);
+  background: rgba(var(--sim-cian-rgb), 0.05);
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -1786,37 +1774,37 @@ button {
 .admin-filter-input,
 .admin-filter-select {
   padding: 6px 10px;
-  background: rgba(74, 90, 82, 0.6);
-  border: 1px solid rgba(160, 212, 232, 0.3);
-  color: #e8e8e8;
+  background: rgba(var(--sim-panel-medio-rgb), 0.6);
+  border: 1px solid rgba(var(--sim-cian-rgb), 0.3);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 12px;
   min-height: 32px;
 }
 
 .admin-filter-input::placeholder {
-  color: rgba(160, 212, 232, 0.5);
+  color: rgba(var(--sim-cian-rgb), 0.5);
 }
 
 .admin-filter-input:focus,
 .admin-filter-select:focus {
   outline: none;
-  border-color: #a0d4e8;
-  background: rgba(74, 90, 82, 0.8);
-  box-shadow: 0 0 8px rgba(160, 212, 232, 0.2);
+  border-color: var(--sim-cian);
+  background: rgba(var(--sim-panel-medio-rgb), 0.8);
+  box-shadow: 0 0 8px rgba(var(--sim-cian-rgb), 0.2);
 }
 
 .admin-actions {
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.08) 0%, transparent 100%);
   flex-shrink: 0;
 }
 
 .admin-new-btn {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(160, 212, 232, 0.15) 100%);
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  color: #d4af37;
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.25) 0%, rgba(var(--sim-cian-rgb), 0.15) 100%);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.4);
+  color: var(--sim-oro);
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
@@ -1827,9 +1815,9 @@ button {
 }
 
 .admin-new-btn:hover {
-  background: linear-gradient(135deg, rgba(212, 175, 55, 0.4) 0%, rgba(160, 212, 232, 0.25) 100%);
-  border-color: #d4af37;
-  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
+  background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.4) 0%, rgba(var(--sim-cian-rgb), 0.25) 100%);
+  border-color: var(--sim-oro);
+  box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.2);
 }
 
 .admin-data-table {
@@ -1839,22 +1827,22 @@ button {
 }
 
 .admin-data-table thead {
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.18) 0%, rgba(212, 175, 55, 0.12) 100%);
-  border-bottom: 2px solid #d4af37;
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.18) 0%, rgba(var(--sim-oro-rgb), 0.12) 100%);
+  border-bottom: 2px solid var(--sim-oro);
   position: sticky;
   top: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(212, 175, 55, 0.3);
+  box-shadow: 0 2px 8px rgba(var(--sim-negro-rgb), 0.3), inset 0 1px 0 rgba(var(--sim-oro-rgb), 0.3);
 }
 
 .admin-data-table thead th {
-  color: #d4af37;
+  color: var(--sim-oro);
   padding: 12px 14px;
   text-align: left;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   white-space: nowrap;
-  border-right: 1px solid rgba(212, 175, 55, 0.15);
+  border-right: 1px solid rgba(var(--sim-oro-rgb), 0.15);
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 11px;
@@ -1865,9 +1853,9 @@ button {
 }
 
 .admin-data-table thead th:hover {
-  background: rgba(212, 175, 55, 0.15);
-  color: #ffeb3b;
-  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  color: var(--sim-amarillo-resalte);
+  text-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.4);
 }
 
 .admin-data-table tbody {
@@ -1887,24 +1875,24 @@ button {
   display: table;
   width: 100%;
   table-layout: fixed;
-  border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.1);
 }
 
 .admin-data-table td {
   padding: 10px 12px;
-  color: #e8e8e8;
+  color: var(--sim-texto);
   word-break: break-word;
 }
 
 .admin-data-table tbody tr:hover {
-  background: rgba(212, 175, 55, 0.05);
+  background: rgba(var(--sim-oro-rgb), 0.05);
 }
 
 .admin-edit-btn,
 .admin-delete-btn {
   padding: 4px 8px;
   margin-right: 4px;
-  border: 1px solid rgba(212, 175, 55, 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 3px;
   font-size: 10px;
   cursor: pointer;
@@ -1913,21 +1901,21 @@ button {
 }
 
 .admin-edit-btn {
-  color: #a0d4e8;
+  color: var(--sim-cian);
 }
 
 .admin-edit-btn:hover {
-  background: rgba(160, 212, 232, 0.15);
-  border-color: #a0d4e8;
+  background: rgba(var(--sim-cian-rgb), 0.15);
+  border-color: var(--sim-cian);
 }
 
 .admin-delete-btn {
-  color: #ff6b6b;
+  color: var(--sim-rojo);
 }
 
 .admin-delete-btn:hover {
-  background: rgba(255, 107, 107, 0.15);
-  border-color: #ff6b6b;
+  background: rgba(var(--sim-rojo-rgb), 0.15);
+  border-color: var(--sim-rojo);
 }
 
 .admin-rol-badge {
@@ -1939,13 +1927,15 @@ button {
 }
 
 .admin-rol-badge.administrador {
-  background: rgba(255, 107, 107, 0.2);
-  color: #ff6b6b;
+  background: rgba(var(--sim-rojo-rgb), 0.2);
+  color: var(--sim-rojo);
 }
 
-.admin-rol-badge.usuario {
-  background: rgba(160, 212, 232, 0.2);
-  color: #a0d4e8;
+/* `usuario` es el nombre viejo del rol; el backend hoy manda `jugador`. */
+.admin-rol-badge.usuario,
+.admin-rol-badge.jugador {
+  background: rgba(var(--sim-cian-rgb), 0.2);
+  color: var(--sim-cian);
 }
 
 .admin-estado-badge {
@@ -1958,13 +1948,13 @@ button {
 }
 
 .admin-estado-badge.activo {
-  background: rgba(76, 175, 80, 0.2);
-  color: #4caf50;
+  background: rgba(var(--sim-estado-activo-rgb), 0.2);
+  color: var(--sim-estado-activo);
 }
 
 .admin-estado-badge.inactivo {
-  background: rgba(244, 67, 54, 0.2);
-  color: #f44336;
+  background: rgba(var(--sim-estado-inactivo-rgb), 0.2);
+  color: var(--sim-estado-inactivo);
 }
 
 .admin-bando-badge {
@@ -1977,27 +1967,35 @@ button {
 }
 
 .admin-bando-badge.azul {
-  background: rgba(100, 150, 255, 0.3);
-  color: #6496ff;
-  border: 1px solid #6496ff;
+  background: rgba(var(--sim-bando-azul-rgb), 0.3);
+  color: var(--sim-bando-azul);
+  border: 1px solid var(--sim-bando-azul);
 }
 
 .admin-bando-badge.rojo {
-  background: rgba(255, 100, 100, 0.3);
-  color: #ff6464;
-  border: 1px solid #ff6464;
+  background: rgba(var(--sim-bando-rojo-rgb), 0.3);
+  color: var(--sim-bando-rojo);
+  border: 1px solid var(--sim-bando-rojo);
 }
 
 .admin-bando-badge.verde {
-  background: rgba(100, 255, 100, 0.3);
-  color: #64ff64;
-  border: 1px solid #64ff64;
+  background: rgba(var(--sim-bando-verde-rgb), 0.3);
+  color: var(--sim-bando-verde);
+  border: 1px solid var(--sim-bando-verde);
 }
 
 .admin-bando-badge.independiente {
-  background: rgba(255, 200, 100, 0.3);
-  color: #ffc864;
-  border: 1px solid #ffc864;
+  background: rgba(var(--sim-ambar-rgb), 0.3);
+  color: var(--sim-ambar);
+  border: 1px solid var(--sim-ambar);
+}
+
+/* El bando no se pudo derivar: la cadena jugador → unidad está incompleta. */
+.admin-bando-badge.sin-bando {
+  background: rgba(var(--sim-blanco-rgb), 0.06);
+  color: rgba(var(--sim-texto-rgb), 0.55);
+  border: 1px dashed rgba(var(--sim-texto-rgb), 0.35);
+  cursor: help;
 }
 
 /* Form Modal */
@@ -2008,8 +2006,8 @@ button {
   transform: translate(-50%, -50%) scale(0.9);
   width: 90%;
   max-width: 600px;
-  background: linear-gradient(180deg, #556b5f 0%, #4a5a52 100%);
-  border: 2px solid rgba(212, 175, 55, 0.3);
+  background: linear-gradient(180deg, var(--sim-panel-claro) 0%, var(--sim-panel-medio) 100%);
+  border: 2px solid rgba(var(--sim-oro-rgb), 0.3);
   border-radius: 8px;
   z-index: 10000;
   display: none;
@@ -2017,7 +2015,7 @@ button {
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 12px 32px rgba(var(--sim-negro-rgb), 0.3);
   max-height: 90vh;
   overflow: hidden;
 }
@@ -2041,14 +2039,14 @@ button {
   justify-content: space-between;
   align-items: flex-start;
   padding: 16px 20px;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.1) 0%, transparent 100%);
-  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, rgba(var(--sim-oro-rgb), 0.1) 0%, transparent 100%);
+  border-bottom: 1px solid rgba(var(--sim-oro-rgb), 0.2);
   flex-shrink: 0;
   gap: 12px;
 }
 
 .admin-form-header h3 {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 16px;
   font-weight: 700;
   margin: 0;
@@ -2057,7 +2055,7 @@ button {
 }
 
 .admin-form-subtitle {
-  color: #a0d4e8;
+  color: var(--sim-cian);
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0;
@@ -2067,8 +2065,8 @@ button {
 
 .admin-form-close {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -2079,8 +2077,8 @@ button {
 }
 
 .admin-form-close:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 #admin-form {
@@ -2105,7 +2103,7 @@ button {
 }
 
 .admin-form-group label {
-  color: #d4af37;
+  color: var(--sim-oro);
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -2116,9 +2114,9 @@ button {
 .admin-form-group select,
 .admin-form-group textarea {
   padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #e8e8e8;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
   border-radius: 4px;
   font-size: 12px;
   outline: none;
@@ -2129,15 +2127,15 @@ button {
 .admin-form-group input::placeholder,
 .admin-form-group select::placeholder,
 .admin-form-group textarea::placeholder {
-  color: rgba(212, 175, 55, 0.5);
+  color: rgba(var(--sim-oro-rgb), 0.5);
 }
 
 .admin-form-group input:focus,
 .admin-form-group select:focus,
 .admin-form-group textarea:focus {
-  border-color: rgba(212, 175, 55, 0.5);
-  background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 6px rgba(212, 175, 55, 0.15);
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.4);
+  box-shadow: 0 0 6px rgba(var(--sim-oro-rgb), 0.15);
 }
 
 .admin-form-group textarea {
@@ -2150,8 +2148,8 @@ button {
   gap: 8px;
   justify-content: flex-end;
   padding: 12px 20px;
-  border-top: 1px solid rgba(212, 175, 55, 0.2);
-  background: rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(var(--sim-oro-rgb), 0.2);
+  background: rgba(var(--sim-negro-rgb), 0.1);
   flex-shrink: 0;
 }
 
@@ -2169,24 +2167,24 @@ button {
 }
 
 .admin-submit-btn {
-  background: linear-gradient(135deg, #d4af37 0%, #c49b2e 100%);
-  color: #0f1f2e;
+  background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
+  color: var(--sim-fondo-solido);
 }
 
 .admin-submit-btn:hover {
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  box-shadow: 0 0 12px rgba(var(--sim-oro-rgb), 0.3);
   transform: translateY(-1px);
 }
 
 .admin-cancel-btn {
   background: transparent;
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  color: #d4af37;
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.3);
+  color: var(--sim-oro);
 }
 
 .admin-cancel-btn:hover {
-  background: rgba(212, 175, 55, 0.15);
-  border-color: #d4af37;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border-color: var(--sim-oro);
 }
 
 .admin-form-overlay {
@@ -2195,7 +2193,7 @@ button {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(var(--sim-negro-rgb), 0.5);
   z-index: 9999;
   display: none;
   opacity: 0;
@@ -2207,24 +2205,4 @@ button {
   display: block;
   opacity: 1;
   visibility: visible;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color: #f6f6f6;
-    background-color: #2f2f2f;
-  }
-
-  a:hover {
-    color: #24c8db;
-  }
-
-  input,
-  button {
-    color: #ffffff;
-    background-color: #0f0f0f98;
-  }
-  button:active {
-    background-color: #0f0f0f69;
-  }
 }
