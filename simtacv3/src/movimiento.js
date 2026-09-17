@@ -14,12 +14,41 @@ import Socket from './socket.js';
 import Mapa from './mapa.js';
 import { mapaAXY, xyAMapa, formatearDistancia, formatearDuracion } from './geo.js';
 import { toast, toastError, toastExito, toastAviso, esc } from './ui.js';
+import { crearRegistroMovimientos } from './movimiento-protocolo.js';
 
 let modo = null;              // null | 'destino' | 'polilinea' | 'base'
 let itemActivo = null;
 let puntos = [];
 let banner = null;
 let desuscribirClic = null;
+const registro = crearRegistroMovimientos();
+
+function commandId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `mov-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function dibujarInicio(evento, resultado) {
+  const item = Store.aplicarCampos(evento.entidad_tipo, evento.entidad_id, { estado_movimiento: 'en_movimiento' });
+  if (!item || !Store.visibleParaMi(item)) return item;
+  Mapa.dibujarTrayecto(evento.entidad_tipo, evento.entidad_id, resultado.current.route || [],
+    Store.esAliada(item.entidad), resultado.current.identity);
+  return item;
+}
+
+function adoptarInicio(evento) {
+  const resultado = registro.inicio(evento);
+  if (!resultado.accepted) return null;
+  return { resultado, item: dibujarInicio(evento, resultado) };
+}
+
+function camposFinales(evento) {
+  const fields = { estado_movimiento: 'estacionado' };
+  for (const name of ['posicion_x', 'posicion_y', 'distancia_recorrida', 'autonomia_actual']) {
+    if (Number.isFinite(Number(evento[name]))) fields[name] = Number(evento[name]);
+  }
+  return fields;
+}
 
 // ---------------------------------------------------------------------------
 // Banner de modo
@@ -67,12 +96,14 @@ async function enviarMovimiento(item, destino) {
       ejercicio_id: Store.ejercicioId,
       entidad_tipo: item.tipo,
       entidad_id: item.id,
+      commandId: commandId(),
       // `posicion_inicio` es opcional: omitirlo usa la posición actual.
       posicion_fin: destino,
     });
-    // Los waypoints que valen son los que resolvió el servidor.
-    Mapa.dibujarTrayecto(item.tipo, item.id, respuesta.waypoints || []);
-    const ruta = respuesta.ruta_nombre ? ` por «${respuesta.ruta_nombre}»` : ' en línea recta';
+    // ACK y evento llevan la misma identidad: adoptar ambos es seguro y no
+    // crea una segunda capa ni reemplaza una orden posterior.
+    adoptarInicio(respuesta);
+    const ruta = respuesta.routeId ? ' por ruta calculada' : (respuesta.ruta_nombre ? ` por «${respuesta.ruta_nombre}»` : '');
     toastExito(
       `${item.entidad.nombre}${ruta}: ${formatearDistancia((respuesta.distancia_km || 0) * 1000)} · ${formatearDuracion(respuesta.tiempo_estimado_seg)}`,
     );
@@ -173,9 +204,10 @@ async function confirmarPolilinea() {
       ejercicio_id: Store.ejercicioId,
       entidad_tipo: item.tipo,
       entidad_id: item.id,
+      commandId: commandId(),
       waypoints: waypointsFinales,
     });
-    Mapa.dibujarTrayecto(item.tipo, item.id, respuesta.waypoints || waypointsFinales);
+    adoptarInicio(respuesta);
     toastExito(
       `${item.entidad.nombre}: ${formatearDistancia((respuesta.distancia_km || 0) * 1000)} · ${formatearDuracion(respuesta.tiempo_estimado_seg)}`,
     );
@@ -252,7 +284,6 @@ export async function cancelar(item) {
       entidad_tipo: item.tipo,
       entidad_id: item.id,
     });
-    Mapa.limpiarTrayecto(item.tipo, item.id);
     toast(`Movimiento de ${item.entidad.nombre} cancelado`);
   } catch (e) {
     toastError(e.message);
@@ -287,9 +318,10 @@ async function volverABase(item) {
       ejercicio_id: Store.ejercicioId,
       entidad_tipo: item.tipo,
       entidad_id: item.id,
+      commandId: commandId(),
       waypoints: [base],
     });
-    Mapa.dibujarTrayecto(item.tipo, item.id, respuesta.waypoints || [base]);
+    adoptarInicio(respuesta);
     toastAviso(`${item.entidad.nombre}: regresando a la base`);
   } catch (e) {
     toastError(e.message);
@@ -338,31 +370,25 @@ function verificarPuedeMover(item) {
 
 export function init() {
   Socket.on('entidad:movimiento_iniciado', (e) => {
-    const item = Store.aplicarCampos(e.entidad_tipo, e.entidad_id, { estado_movimiento: 'en_movimiento' });
-    if (!item) return;
-    // Este evento llega a TODA la room del ejercicio, no solo al bando que
-    // puede ver la entidad (a diferencia de `entidad:detectada`, que sí está
-    // acotado por bando): sin este chequeo, el trayecto de un enemigo fuera
-    // de rango se dibuja igual y delata su posición/rumbo aunque el ícono
-    // se mantenga oculto por niebla de guerra.
-    if (!Store.visibleParaMi(item)) return;
-    Mapa.dibujarTrayecto(e.entidad_tipo, e.entidad_id, e.waypoints || [], Store.esAliada(item.entidad));
+    adoptarInicio(e);
   });
 
   // Llega 1 vez por segundo.
   Socket.on('entidad:posicion_actualizada', (e) => {
+    const resultado = registro.posicion(e);
+    if (!resultado.accepted) return;
     const item = Store.actualizarPosicion(e);
-    if (item) Mapa.animarHacia(item, 1000);
+    if (!item) return;
+    Mapa.animarPorTrayecto(item, resultado.current.route,
+      resultado.previous?.progressKm ?? resultado.current.progressKm,
+      resultado.current.progressKm, 1000);
   });
 
   Socket.on('entidad:movimiento_completado', (e) => {
-    const item = Store.aplicarCampos(e.entidad_tipo, e.entidad_id, {
-      posicion_x: Number(e.posicion_x),
-      posicion_y: Number(e.posicion_y),
-      distancia_recorrida: Number(e.distancia_recorrida ?? 0),
-      estado_movimiento: 'estacionado',
-    });
-    Mapa.limpiarTrayecto(e.entidad_tipo, e.entidad_id);
+    const resultado = registro.final(e);
+    if (!resultado.accepted) return;
+    const item = Store.aplicarCampos(e.entidad_tipo, e.entidad_id, camposFinales(e));
+    Mapa.limpiarTrayecto(e.entidad_tipo, e.entidad_id, resultado.current.identity);
     if (item && Store.controlo(item)) {
       toast(e.cancelado
         ? `${item.entidad.nombre}: movimiento cancelado`
@@ -370,11 +396,36 @@ export function init() {
     }
   });
 
-  // Si se cae el socket, el backend detiene los movimientos y deja las
-  // entidades estacionadas: al reconectar hay que volver a ordenarlos.
-  Socket.alVolverAUnirse(() => {
-    Mapa.limpiarTrayectos();
-    toastAviso('Reconectado: los movimientos en curso se detuvieron, hay que volver a ordenarlos');
+  Socket.on('entidad:movimientos_snapshot', (snapshot) => {
+    const resultado = registro.snapshot(snapshot);
+    if (!resultado.accepted) return;
+    for (const { entry } of resultado.removed) {
+      Mapa.limpiarTrayecto(entry.entity.tipo, entry.entity.id, entry.identity);
+    }
+    for (const movimiento of resultado.movements) {
+      const item = Store.obtenerPorClave(movimiento.key);
+      if (!item || !Store.visibleParaMi(item)) continue;
+      Mapa.dibujarTrayecto(item.tipo, item.id, movimiento.current.route || [],
+        Store.esAliada(item.entidad), movimiento.current.identity);
+    }
+  });
+
+  Socket.alVolverAUnirse(async () => {
+    try {
+      const snapshot = await Socket.emitir('entidad:movimientos', { ejercicio_id: Store.ejercicioId });
+      const resultado = registro.snapshot(snapshot);
+      if (!resultado.accepted) return;
+      for (const { entry } of resultado.removed) Mapa.limpiarTrayecto(entry.entity.tipo, entry.entity.id, entry.identity);
+      for (const movimiento of resultado.movements) {
+        const item = Store.obtenerPorClave(movimiento.key);
+        if (item && Store.visibleParaMi(item)) {
+          Mapa.dibujarTrayecto(item.tipo, item.id, movimiento.current.route || [],
+            Store.esAliada(item.entidad), movimiento.current.identity);
+        }
+      }
+    } catch (error) {
+      console.warn('No se pudo sincronizar movimientos tras reconectar:', error.message);
+    }
   });
 
   document.addEventListener('keydown', (evento) => {

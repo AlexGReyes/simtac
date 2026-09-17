@@ -8,6 +8,7 @@ import Sidc from './sidc.js';
 import { entidadAMapa, xyAMapa, mapaALonLat, metrosAUnidadesMapa, PROYECCION_MAPA } from './geo.js';
 import Geoserver from './geoserver.js';
 import { toast } from './ui.js';
+import { posicionEnRuta, prepararRuta } from './movimiento-ruta.js';
 
 const ratio = () => window.devicePixelRatio || 1;
 
@@ -28,7 +29,7 @@ let capaBase = null;
 let capaAnillos = null;
 let mostrarRangos = false;
 
-/** Animaciones en curso: clave -> { desde, hasta, t0, duracion }. */
+/** Animaciones en curso: clave -> trayectoria canónica y progreso. */
 const animaciones = new Map();
 let rafActivo = false;
 
@@ -499,6 +500,27 @@ export function animarHacia(item, duracion = 1000) {
   }
 }
 
+/**
+ * Anima sobre los segmentos de la ruta resuelta, no sobre la cuerda entre dos
+ * ticks. Con multiplicadores altos el avance puede cruzar varias curvas en un
+ * segundo; interpolar sus dos extremos dibujaría una recta fuera del camino.
+ */
+export function animarPorTrayecto(item, waypoints, desdeKm, hastaKm, duracion = 1000) {
+  if (!capaEntidades || arrastrando.has(item.clave)) return;
+  const feature = capaEntidades.getSource().getFeatureById(item.clave);
+  const ruta = prepararRuta(waypoints);
+  if (!feature || !ruta || !Number.isFinite(Number(desdeKm)) || !Number.isFinite(Number(hastaKm))) {
+    animarHacia(item, duracion);
+    return;
+  }
+  animaciones.set(item.clave, { ruta, desdeKm: Number(desdeKm), hastaKm: Number(hastaKm),
+    t0: performance.now(), duracion });
+  if (!rafActivo) {
+    rafActivo = true;
+    requestAnimationFrame(paso);
+  }
+}
+
 function paso(ahora) {
   const fuente = capaEntidades?.getSource();
   if (!fuente) {
@@ -512,10 +534,15 @@ function paso(ahora) {
       continue;
     }
     const t = Math.min(1, (ahora - anim.t0) / anim.duracion);
-    feature.getGeometry().setCoordinates([
-      anim.desde[0] + (anim.hasta[0] - anim.desde[0]) * t,
-      anim.desde[1] + (anim.hasta[1] - anim.desde[1]) * t,
-    ]);
+    if (anim.ruta) {
+      const punto = posicionEnRuta(anim.ruta, anim.desdeKm + (anim.hastaKm - anim.desdeKm) * t);
+      if (punto) feature.getGeometry().setCoordinates(xyAMapa(punto));
+    } else {
+      feature.getGeometry().setCoordinates([
+        anim.desde[0] + (anim.hasta[0] - anim.desde[0]) * t,
+        anim.desde[1] + (anim.hasta[1] - anim.desde[1]) * t,
+      ]);
+    }
     if (t >= 1) animaciones.delete(k);
   }
   if (animaciones.size > 0) {
@@ -530,7 +557,7 @@ function paso(ahora) {
 // ---------------------------------------------------------------------------
 
 /** Dibuja los waypoints RESUELTOS POR EL SERVIDOR de un movimiento. */
-export function dibujarTrayecto(tipo, id, waypoints, propia = true) {
+export function dibujarTrayecto(tipo, id, waypoints, propia = true, identidad = null) {
   if (!capaTrayectos || !Array.isArray(waypoints) || waypoints.length < 2) return;
   const k = clave(tipo, id);
   limpiarTrayecto(tipo, id);
@@ -539,13 +566,23 @@ export function dibujarTrayecto(tipo, id, waypoints, propia = true) {
   });
   feature.setId(`ruta:${k}`);
   feature.set('propia', propia);
+  feature.set('identidadMovimiento', identidad);
   capaTrayectos.getSource().addFeature(feature);
 }
 
-export function limpiarTrayecto(tipo, id) {
+function identidadCoincide(primera, segunda) {
+  if (!primera || !segunda) return true;
+  return primera.serverEpoch === segunda.serverEpoch &&
+    Number(primera.generation) === Number(segunda.generation) &&
+    primera.routeId === segunda.routeId;
+}
+
+export function limpiarTrayecto(tipo, id, identidad = null) {
   if (!capaTrayectos) return;
   const feature = capaTrayectos.getSource().getFeatureById(`ruta:${clave(tipo, id)}`);
-  if (feature) capaTrayectos.getSource().removeFeature(feature);
+  if (feature && identidadCoincide(feature.get('identidadMovimiento'), identidad)) {
+    capaTrayectos.getSource().removeFeature(feature);
+  }
 }
 
 export function limpiarTrayectos() {
@@ -1032,7 +1069,7 @@ export function encuadrarTodo() {
 }
 
 export default {
-  init, instancia, renderizarTodo, actualizarEntidad, animarHacia,
+  init, instancia, renderizarTodo, actualizarEntidad, animarHacia, animarPorTrayecto,
   dibujarTrayecto, limpiarTrayecto, limpiarTrayectos,
   mostrarBase, ocultarBase, mostrarAnillos, ocultarAnillos,
   alternarRangos, rangosVisibles, capaDeDibujo, limpiarDibujo,

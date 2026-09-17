@@ -52,6 +52,20 @@ socket.emit("entidad:mover", payload, (res) => {
 
 **7. `node.localhost` no lo resuelve el lado Rust de Tauri.** El WebView (navegador) sí, por la regla de RFC 6761. El resolver de Node/Rust no. Si hacés alguna llamada desde el proceso nativo, apuntá a la IP o agregá la entrada a `/etc/hosts`.
 
+**8. Movimiento se reconcilia por identidad, no por orden de llegada.** El
+backend corregido entrega `serverEpoch`, `generation`, `sequence`, `movementId`
+y `routeId` en ACK, inicio, ticks y fin. Conservá una ruta activa por entidad,
+descartá una generación o secuencia anterior y suscribite a
+`entidad:movimientos_snapshot` antes de unirte al ejercicio. El ACK y el evento
+de inicio pueden representar exactamente la misma ejecución: no deben dibujar
+dos capas. Al reconectar, adoptá el snapshot del servidor vigente.
+
+La ruta mostrada se toma de `waypoints`/`geometry` resueltos por el servidor y
+se anima por progreso acumulado sobre sus vértices. No agregues una recta entre
+el origen pedido y el enganche vial, ni interpoles una cuerda que corte una
+curva. Los accesos fuera de carretera futuros también llegan como segmentos
+explícitos de esa misma ruta canónica.
+
 ---
 
 ## Fases de desarrollo
