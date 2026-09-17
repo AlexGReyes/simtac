@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SIMTAC · prueba de cartografía GeoServer</title>
+    <link rel="stylesheet" href="vendor/ol/ol.css" />
+    <script src="vendor/ol/ol.js"></script>
+    <style>
+      html, body { margin: 0; height: 100%; background: #131f18; color: #e8e8e8;
+                   font: 13px/1.45 'Segoe UI', sans-serif; }
+      #mapa { position: absolute; inset: 0; }
+      #hud { position: absolute; top: 10px; left: 10px; z-index: 10; width: 340px;
+             background: rgba(19, 31, 24, 0.94); border: 1px solid #d4af37;
+             border-radius: 6px; padding: 10px; }
+      #hud h1 { margin: 0 0 8px; font-size: 13px; color: #d4af37;
+                letter-spacing: 0.06em; text-transform: uppercase; }
+      #hud label { display: block; margin-bottom: 4px; font-size: 11px; color: #f5e6c8; }
+      #hud input[type="text"] { width: 100%; box-sizing: border-box; padding: 5px;
+                                background: rgba(0,0,0,0.35); border: 1px solid rgba(232,232,232,0.2);
+                                border-radius: 3px; color: #e8e8e8; font-size: 11px; }
+      #hud button { margin-top: 6px; padding: 5px 9px; background: rgba(212,175,55,0.15);
+                    border: 1px solid #d4af37; border-radius: 3px; color: #d4af37;
+                    cursor: pointer; font-size: 11px; }
+      #hud p { margin: 8px 0 0; font-size: 11px; word-break: break-word; }
+      .ok { color: #4cff33; } .mal { color: #ff6b6b; }
+      dl { margin: 6px 0 0; font-size: 11px; }
+      dt { color: rgba(232,232,232,0.6); }
+    </style>
+  </head>
+  <body>
+    <!--
+      Página de diagnóstico, fuera del flujo de la app: sirve para comprobar que
+      un equipo de la LAN llega al GeoServer y que las teselas se dibujan, sin
+      pasar por login ni por el backend Node. No es parte de SIMTAC en sí; el
+      mapa real lo arma `mapa.js` con este mismo módulo `geoserver.js`.
+
+      Cómo abrirla: `npx http-server src -p 8080` (o `python -m http.server` en
+      `src/`) y entrar a http://localhost:8080/mapa-prueba.html?geoserver=http://10.40.0.24:3001/geoserver
+      Un `file://` directo NO sirve: los módulos ES se bloquean por CORS.
+    -->
+    <div id="mapa"></div>
+    <div id="hud">
+      <h1>Cartografía SIMTAC</h1>
+      <label for="url">Servidor GeoServer</label>
+      <input id="url" type="text" spellcheck="false" />
+      <button id="aplicar">Aplicar y recargar</button>
+      <button id="probar">Probar</button>
+      <p id="estado">—</p>
+      <dl id="detalle"></dl>
+    </div>
+
+    <script type="module">
+      import Geoserver from './geoserver.js';
+      import { PROYECCION_MAPA, xyAMapa } from './geo.js';
+
+      // Misma cadena de configuración que la app (query → config del usuario →
+      // config.json del despliegue → loopback).
+      await Geoserver.cargarConfiguracion();
+
+      const estado = document.getElementById('estado');
+      const detalle = document.getElementById('detalle');
+      const inputUrl = document.getElementById('url');
+      inputUrl.value = Geoserver.urlBase();
+
+      const capasBase = Geoserver.crearCapasBase();
+      const capaSatelite = Geoserver.crearCapaSatelite();
+
+      const mapa = new ol.Map({
+        target: 'mapa',
+        layers: [...capasBase, capaSatelite],
+        view: new ol.View({
+          projection: PROYECCION_MAPA,
+          resolutions: Geoserver.resoluciones(),
+          center: xyAMapa({ x: -99.1332, y: 19.4326 }),
+          zoom: 8,
+        }),
+      });
+
+      // Contador de teselas: si el servidor no responde, esto lo delata enseguida
+      // en vez de dejar un mapa gris sin explicación.
+      let pedidas = 0;
+      let fallidas = 0;
+      const escucharFuente = (capa) => {
+        const fuente = capa.getSource();
+        fuente.on('tileloadstart', () => { pedidas += 1; pintar(); });
+        fuente.on('tileloaderror', () => { fallidas += 1; pintar(); });
+      };
+      [...capasBase, capaSatelite].forEach(escucharFuente);
+
+      const pintar = () => {
+        const zoom = Math.floor(mapa.getView().getZoom());
+        estado.className = fallidas ? 'mal' : 'ok';
+        estado.textContent =
+          `z${zoom} · grupo ${Geoserver.grupoParaZoom(zoom).nombre} · ` +
+          `teselas pedidas ${pedidas}, fallidas ${fallidas}`;
+      };
+
+      const sincronizar = () => {
+        const zoom = mapa.getView().getZoom();
+        Geoserver.sincronizarBase(capasBase, zoom);
+        Geoserver.sincronizarSatelite(capaSatelite, zoom, true);
+        pintar();
+      };
+      mapa.getView().on('change:resolution', sincronizar);
+      sincronizar();
+
+      document.getElementById('aplicar').addEventListener('click', () => {
+        try {
+          Geoserver.fijarUrlBase(inputUrl.value);
+          setTimeout(() => location.reload(), 100); // deja terminar la escritura
+        } catch (error) {
+          estado.className = 'mal';
+          estado.textContent = error.message;
+        }
+      });
+
+      document.getElementById('probar').addEventListener('click', async () => {
+        estado.className = '';
+        estado.textContent = 'Probando…';
+        const resultado = await Geoserver.probar();
+        detalle.innerHTML = Object.entries(resultado)
+          .map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`)
+          .join('');
+        pintar();
+      });
+    </script>
+  </body>
+</html>

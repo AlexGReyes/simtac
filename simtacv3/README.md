@@ -19,7 +19,7 @@ Las 8 fases del contrato de frontend (`frontend.md`) están implementadas:
 | 0 | Sesión, cliente HTTP/socket, store del estado | `api.js`, `session.js`, `auth.js`, `socket.js`, `store.js`, `geo.js`, `ui.js` |
 | 1 | Login/registro y selección de ejercicio | `login-ui.js`, `ejercicios-ui.js` |
 | 2 | Administración: usuarios, unidades, ejercicios, armamento, vehículos | `admin.js`, `config-catalogos.js` |
-| 3 | Mapa OpenLayers con símbolos SIDC y panel de detalle | `mapa.js`, `panel-entidad.js` |
+| 3 | Mapa OpenLayers con cartografía SIMTAC GeoServer, símbolos SIDC y panel de detalle | `mapa.js`, `geoserver.js`, `panel-entidad.js` |
 | 4 | Movimiento terrestre y libre (aire/mar), con interpolación visual | `movimiento.js` |
 | 5 | Detección y niebla de guerra | `deteccion.js` |
 | 6 | Combate (diálogo, HUD, log) | `combate.js` |
@@ -32,17 +32,34 @@ y uno de "mis unidades" para que el jugador se ubique rápido en el mapa
 
 **Corre sin conexión a internet.** OpenLayers, milsymbol, socket.io-client y
 la tipografía se vendorizaron en `src/vendor/` (nada se carga de un CDN — ver
-`src/vendor/README.md`). El mapa además consume un **GeoServer WMS local**
-(`http://localhost:3001/geoserver/wms`, no existe en esta máquina de
-desarrollo, sí en producción) como overlay simultáneo sobre la capa base.
+`src/vendor/README.md`).
 
-**Abierto:**
-- La capa base del mapa sigue siendo OpenStreetMap (`ol.source.OSM()`), que
-  **sí** pide tiles a internet — queda en blanco sin conexión. Pendiente:
-  publicar un basemap en el GeoServer de producción y reemplazarla.
-- `WMS_LAYERS` en `mapa.js` es un placeholder (`CAMBIAR:nombre_de_capa`):
-  falta el nombre real de la capa, que solo se puede leer del
-  `GetCapabilities` de un GeoServer de producción.
+**La cartografía es de un SIMTAC GeoServer de la red local**, no de internet:
+ya no hay capa de OpenStreetMap. El fondo son los 5 layergroups cacheados por
+WMTS/GeoWebCache (uno activo por vez según el zoom), más el mosaico satelital
+—condicional, vive en un disco montable— y las capas temáticas WMS que se
+prendan desde el panel 🗺 de la barra del mapa. `src/geoserver.js` es el único
+módulo que habla con ese servidor; la implementación sigue
+`INTEGRACION_SIMTAC_GEOSERVER.md` e `INTEGRACION_RED_LOCAL_MAC.md`, y las
+reglas duras (proyección EPSG:4326, WMS 1.1.1, versionado de caché, nada de
+`/geoserver/rest`) están resumidas en `CLAUDE.md`.
+
+**Para cambiar de máquina o de red no hay que tocar código.** Las dos
+direcciones del despliegue —`backend` (el servidor Node de la simulación) y
+`geoserver` (la cartografía)— viven en **`src/config.json`**, con las IPs
+alternativas anotadas al lado. En una máquina ya instalada ese archivo queda
+dentro del binario, así que ahí manda otro `config.json` en el directorio de
+configuración de la app (`%APPDATA%/com.agrey.simtacv3/`): lo escribe el panel 🗺
+—que además muestra su ruta exacta— y se puede editar con un bloc de notas. Para
+una prueba puntual, `?geoserver=...` o `?backend=...` en la URL de arranque
+ganan sobre los dos. Si un valor es inválido se descarta y se usa el siguiente,
+así que un archivo mal editado no deja la app sin backend ni sin mapa. El cambio
+de `geoserver` se aplica en caliente; el de `backend`, al reiniciar.
+
+Para comprobar la conexión desde un equipo de la LAN sin pasar por el login,
+serví `src/` por HTTP y abrí
+`mapa-prueba.html?geoserver=http://<ip>:3001/geoserver`: dibuja solo la
+cartografía y muestra cuántas teselas se pidieron y cuántas fallaron.
 
 Ver `backend.md` para lo que todavía le falta al servidor Node (hoy: nada
 pendiente, es historial de pedidos ya resueltos).
@@ -56,6 +73,9 @@ pendiente, es historial de pedidos ya resueltos).
 | `backend.md` | Pedidos del frontend al backend — qué faltaba y cómo se resolvió |
 | `API.md` | Endpoints REST y eventos de socket, con payloads |
 | `DATABASE.md` | Esquema de la base (tablas, columnas, relaciones) |
+| `INTEGRACION_SIMTAC_GEOSERVER.md` | Referencia de los servicios OGC del GeoServer (WMS/WFS/WMTS, ruta, defectos conocidos) |
+| `INTEGRACION_RED_LOCAL_MAC.md` | Endpoints de la réplica en la LAN y checklist de integración |
+| `src/config.json` | Configuración del despliegue: URLs del backend y del GeoServer (con instrucciones adentro) |
 
 ## Requisitos
 

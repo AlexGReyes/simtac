@@ -5,20 +5,20 @@
 import Store, { clave } from './store.js';
 import Session from './session.js';
 import Sidc from './sidc.js';
-import { entidadAMapa, xyAMapa } from './geo.js';
+import { entidadAMapa, xyAMapa, mapaALonLat, metrosAUnidadesMapa, PROYECCION_MAPA } from './geo.js';
+import Geoserver from './geoserver.js';
+import { toast } from './ui.js';
 
 const ratio = () => window.devicePixelRatio || 1;
 
-// GeoServer WMS local — corre en la misma máquina, no depende de internet
-// (a diferencia de la capa OSM de abajo, que sí). Se agrega como overlay
-// simultáneo sobre OSM, no como reemplazo.
-// ⚠️ `LAYERS` es un placeholder: hay que cambiarlo por el nombre real
-// publicado en ese GeoServer (formato típico `workspace:nombre_capa`,
-// se ve en su GetCapabilities: http://localhost:3001/geoserver/wms?service=WMS&request=GetCapabilities).
-const WMS_URL = 'http://localhost:3001/geoserver/wms';
-const WMS_LAYERS = 'CAMBIAR:nombre_de_capa';
-
 let mapa = null;
+/** Capas cartográficas de GeoServer (ver `geoserver.js`). */
+let capasBase = [];
+let capaSatelite = null;
+/** Lo que el usuario pidió del satélite, aparte de si el zoom lo permite ahora. */
+let quiereSatelite = false;
+/** Overlays WMS sueltos que prendió el usuario: nombre de capa -> ol.layer. */
+const capasWms = new Map();
 let capaEntidades = null;
 let capaTrayectos = null;
 let capaRangos = null;
@@ -227,23 +227,17 @@ export function init(targetId = 'map-container') {
     zIndex: 22,
   });
 
-  const capaWms = new ol.layer.Tile({
-    source: new ol.source.TileWMS({
-      url: WMS_URL,
-      params: { LAYERS: WMS_LAYERS, TILED: true },
-      // Ajusta el pedido de tiles al gridset propio de GeoServer — evita
-      // artefactos de borde entre tiles que salen con el default genérico.
-      serverType: 'geoserver',
-    }),
-    title: 'GeoServer WMS',
-    zIndex: 5,
-  });
+  // Cartografía SIMTAC: 5 layergroups WMTS (uno visible por vez, según el
+  // zoom) más el mosaico satelital, que es condicional. No hay capa OSM: el
+  // equipo corre sin internet y el único fondo disponible es este GeoServer.
+  capasBase = Geoserver.crearCapasBase();
+  capaSatelite = Geoserver.crearCapaSatelite();
 
   mapa = new ol.Map({
     target: targetId,
     layers: [
-      new ol.layer.Tile({ source: new ol.source.OSM() }),
-      capaWms,
+      ...capasBase,
+      capaSatelite,
       capaRangos,
       capaTrayectos,
       capaAnillos,
@@ -253,12 +247,33 @@ export function init(targetId = 'map-container') {
       capaDibujo,
     ],
     view: new ol.View({
-      center: ol.proj.fromLonLat([-99.1332, 19.4326]),
+      projection: PROYECCION_MAPA,
+      // Las resoluciones son las del gridset EPSG:4326 de GeoWebCache, no las
+      // que OL calcularía solo: así el zoom entero del mapa coincide con el
+      // `TILEMATRIX` pedido y con las bandas de zoom de los layergroups.
+      resolutions: Geoserver.resoluciones(),
+      center: xyAMapa({ x: -99.1332, y: 19.4326 }),
       zoom: 12,
+      maxZoom: 18,
+      // Encaja en niveles enteros: cada zoom coincide con un TILEMATRIX real y
+      // las teselas se ven nítidas en vez de reescaladas a medio camino.
+      constrainResolution: true,
     }),
   });
 
+  // Un solo grupo base activo por vez; el satélite solo entre z12 y z18.
+  const sincronizarCartografia = () => {
+    const zoom = mapa.getView().getZoom();
+    Geoserver.sincronizarBase(capasBase, zoom);
+    Geoserver.sincronizarSatelite(capaSatelite, zoom, quiereSatelite);
+  };
+  mapa.getView().on('change:resolution', sincronizarCartografia);
+  sincronizarCartografia();
+  vigilarTeselas([...capasBase, capaSatelite]);
+
   window.map = mapa;
+  // Diagnóstico de la cartografía desde DevTools sin tener que importar nada.
+  window.simtacGeoserver = Geoserver;
   window.simtacDiagnostico = diagnostico;
   // Solo para depurar desde DevTools (mismo criterio que `window.map`): `Store`
   // es un módulo ES6, no llega solo a la consola.
@@ -598,14 +613,13 @@ export function rangosVisibles() {
 
 /**
  * Un radio en metros no se puede usar tal cual como radio de un
- * `ol.geom.Circle` en EPSG:3857 (Mercator): hay que corregirlo por la
- * latitud de la entidad. Mismo fallback a `posicion_base_y` que usa
- * `entidadAMapa` cuando la posición actual todavía no llegó.
+ * `ol.geom.Circle`: las unidades del mapa dependen de la proyección y de la
+ * latitud. La conversión vive en `geo.js` junto con la proyección que la
+ * decide. Mismo fallback a `posicion_base_y` que usa `entidadAMapa` cuando la
+ * posición actual todavía no llegó.
  */
 function radioCorregido(entidad, metros) {
-  const lat = Number(entidad.posicion_y ?? entidad.posicion_base_y);
-  const correccion = 1 / Math.cos((lat * Math.PI) / 180);
-  return metros * correccion;
+  return metrosAUnidadesMapa(metros, entidad.posicion_y ?? entidad.posicion_base_y);
 }
 
 function dibujarRangos() {
@@ -743,7 +757,7 @@ export function habilitarArrastre(activo, opciones = {}) {
       const item = Store.obtenerPorClave(k);
       if (!item) return;
       // x es longitud, y es latitud.
-      const [x, y] = ol.proj.toLonLat(feature.getGeometry().getCoordinates());
+      const [x, y] = mapaALonLat(feature.getGeometry().getCoordinates());
       alSoltar(item, { x, y });
     });
   });
@@ -807,6 +821,193 @@ export function renderFrame(estado) {
 }
 
 // ---------------------------------------------------------------------------
+// Vigilancia de teselas
+//
+// Cuando el GeoServer no responde, OpenLayers no avisa: deja el mapa gris y
+// escupe un `ERR_CONNECTION_TIMED_OUT` por tesela en la consola. Pasó de verdad
+// —la IP de Wi-Fi del servidor es DHCP y se la quedó otro equipo— y desde la
+// app no se veía ninguna diferencia con "esta zona no tiene cartografía".
+// Este vigilante lo convierte en un aviso que dice qué servidor no contesta y
+// dónde cambiarlo.
+// ---------------------------------------------------------------------------
+
+/** Ya se avisó de esta caída: no repetir el toast por cada tesela. */
+let avisadoSinCartografia = false;
+
+function vigilarTeselas(capas) {
+  for (const capa of capas) {
+    const fuente = capa.getSource();
+    fuente.on('tileloaderror', () => {
+      if (avisadoSinCartografia) return;
+      avisadoSinCartografia = true;
+      const host = (() => {
+        try {
+          return new URL(Geoserver.urlBase()).host;
+        } catch {
+          return Geoserver.urlBase();
+        }
+      })();
+      toast(
+        `Sin cartografía: ${host} no responde. Revisá la dirección en el panel 🗺 de la barra del mapa.`,
+        'error',
+        8000,
+      );
+    });
+    // Una tesela que carga bien rearma el aviso: si el servidor vuelve y se
+    // cae de nuevo más tarde, hay que enterarse otra vez.
+    fuente.on('tileloadend', () => {
+      avisadoSinCartografia = false;
+    });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Cartografía GeoServer: satélite, overlays WMS y consulta del punto
+//
+// La base (los 5 layergroups WMTS) se maneja sola con el zoom; lo de acá es lo
+// que el usuario prende y apaga desde el panel de capas (`app.js`).
+// ---------------------------------------------------------------------------
+
+/** ¿El disco del mosaico satelital está montado ahora mismo? */
+export function sateliteDisponible() {
+  return Geoserver.sateliteDisponible();
+}
+
+/**
+ * Prende o apaga el satélite. La intención del usuario se guarda aparte de la
+ * visibilidad real: fuera de z12–18 la capa se apaga, pero al volver al rango
+ * se vuelve a prender sola en vez de quedar perdida.
+ */
+export function alternarSatelite(valor) {
+  quiereSatelite = valor === undefined ? !quiereSatelite : !!valor;
+  Geoserver.sincronizarSatelite(capaSatelite, mapa?.getView().getZoom() ?? 0, quiereSatelite);
+  return quiereSatelite;
+}
+
+export function sateliteActivo() {
+  return quiereSatelite;
+}
+
+/** Nombre del layergroup base que se está sirviendo ahora. */
+export function grupoBaseActivo() {
+  if (!mapa) return null;
+  return Geoserver.grupoParaZoom(mapa.getView().getZoom()).nombre;
+}
+
+/** Overlays WMS activos, por nombre de capa (`workspace:capa`). */
+export function capasWmsActivas() {
+  return [...capasWms.keys()];
+}
+
+/**
+ * Agrega o quita un overlay WMS suelto. `estilo` vacío hereda el estilo por
+ * defecto publicado, que es lo que necesitan las capas RM remapeadas
+ * semánticamente; solo se pasa un nombre para presentaciones genéricas (p. ej.
+ * `simtac_cartografia_vialidad_jerarquica` en una capa vial fuera de grupo).
+ */
+export function alternarCapaWms(nombre, { estilo = '' } = {}) {
+  if (!mapa || !nombre) return false;
+  const existente = capasWms.get(nombre);
+  if (existente) {
+    mapa.removeLayer(existente);
+    capasWms.delete(nombre);
+    return false;
+  }
+  // zIndex 3: sobre la base y el satélite, siempre debajo de rangos, trayectos
+  // y símbolos — la cartografía nunca tapa lo táctico.
+  const capa = Geoserver.crearCapaWms(nombre, { estilo, zIndex: 3 });
+  capasWms.set(nombre, capa);
+  mapa.addLayer(capa);
+  return true;
+}
+
+/** Saca todos los overlays WMS de golpe. */
+export function limpiarCapasWms() {
+  for (const capa of capasWms.values()) mapa?.removeLayer(capa);
+  capasWms.clear();
+}
+
+/**
+ * GetFeatureInfo sobre el punto clickeado, contra el grupo base activo más los
+ * overlays WMS prendidos. Devuelve `[{ capa, propiedades }]` ya filtrado de
+ * campos técnicos — GeoServer los manda todos, filtrarlos es del cliente.
+ */
+export async function consultarPunto(pixel) {
+  if (!mapa) return [];
+  const vista = mapa.getView();
+  const [ancho, alto] = mapa.getSize() || [0, 0];
+  if (!ancho || !alto) return [];
+
+  const capas = [grupoBaseActivo(), ...capasWms.keys()].filter(Boolean).join(',');
+  if (!capas) return [];
+
+  // El bbox tiene que ser el de la vista con la que se midió el píxel, y en
+  // orden lon,lat porque `geoserver.js` pide WMS 1.1.1.
+  const extension = vista.calculateExtent(mapa.getSize());
+  const respuesta = await Geoserver.getFeatureInfo({
+    capas,
+    bbox: extension,
+    ancho,
+    alto,
+    x: pixel[0],
+    y: pixel[1],
+  });
+
+  return (respuesta?.features || []).map((feature) => ({
+    capa: String(feature.id || '').split('.')[0] || 'capa',
+    propiedades: propiedadesLegibles(feature.properties),
+  }));
+}
+
+/**
+ * Campos internos que GeoServer devuelve y no le dicen nada a un usuario. Los
+ * `*_BAND` son los valores RGBA crudos del relieve: cuando se consulta un
+ * layergroup, el ráster de fondo siempre contesta con ellos y taparían el dato
+ * vectorial que sí importa.
+ */
+const CAMPOS_TECNICOS = /^(gid|fid|objectid|shape_(leng|area)|geom|the_geom|wkb_geometry|id_\w+|(red|green|blue|alpha|gray)_band)$/i;
+
+function propiedadesLegibles(propiedades) {
+  const salida = {};
+  for (const [clave, valor] of Object.entries(propiedades || {})) {
+    if (CAMPOS_TECNICOS.test(clave)) continue;
+    if (valor === null || valor === undefined || valor === '') continue;
+    salida[clave] = valor;
+  }
+  return salida;
+}
+
+/**
+ * Reapunta la cartografía a otra instalación de GeoServer (p. ej. la IP del Mac
+ * en la LAN en vez de loopback). Rehace las capas contra la URL nueva sin tocar
+ * las capas tácticas ni la vista. Lanza si la URL no pasa la validación.
+ */
+export function reapuntarGeoserver(url) {
+  const segura = Geoserver.fijarUrlBase(url);
+  if (!mapa) return segura;
+
+  for (const capa of capasBase) mapa.removeLayer(capa);
+  if (capaSatelite) mapa.removeLayer(capaSatelite);
+  const overlays = [...capasWms.keys()];
+  limpiarCapasWms();
+
+  capasBase = Geoserver.crearCapasBase();
+  capaSatelite = Geoserver.crearCapaSatelite();
+  for (const capa of capasBase) mapa.addLayer(capa);
+  mapa.addLayer(capaSatelite);
+  // Fuentes nuevas: hay que volver a vigilarlas, y el aviso arranca limpio
+  // para que la primera falla del servidor nuevo también se vea.
+  avisadoSinCartografia = false;
+  vigilarTeselas([...capasBase, capaSatelite]);
+
+  const zoom = mapa.getView().getZoom();
+  Geoserver.sincronizarBase(capasBase, zoom);
+  Geoserver.sincronizarSatelite(capaSatelite, zoom, quiereSatelite);
+  for (const nombre of overlays) alternarCapaWms(nombre);
+  return segura;
+}
+
+// ---------------------------------------------------------------------------
 // Vista
 // ---------------------------------------------------------------------------
 
@@ -837,4 +1038,6 @@ export default {
   alternarRangos, rangosVisibles, capaDeDibujo, limpiarDibujo,
   habilitarArrastre, arrastreActivo,
   modoReplay, renderFrame, centrarEn, encuadrarTodo, estadoVisual, diagnostico,
+  sateliteDisponible, alternarSatelite, sateliteActivo, grupoBaseActivo,
+  alternarCapaWms, capasWmsActivas, limpiarCapasWms, consultarPunto, reapuntarGeoserver,
 };

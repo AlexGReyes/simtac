@@ -3,13 +3,19 @@
 // REGLA ÚNICA DEL SISTEMA: `x` es LONGITUD, `y` es LATITUD.
 //   posicion_x: -99.1332 (lon)   posicion_y: 19.4326 (lat)
 //
-// OpenLayers trabaja en EPSG:3857 y espera [lon, lat] al proyectar, así que la
-// conversión es directa; el helper existe para que ningún módulo vuelva a
-// decidir el orden por su cuenta.
+// El mapa NO corre en el EPSG:3857 por defecto de OpenLayers, sino en
+// EPSG:4326: es el único gridset sembrado en el GeoServer de SIMTAC
+// (`INTEGRACION_RED_LOCAL_MAC.md` §3; `WebMercatorQuad` no existe ahí). Todo
+// módulo que necesite pasar de {x, y} a coordenada de mapa —o al revés— usa
+// estos helpers y nunca `ol.proj.*` a mano, para que la proyección se pueda
+// cambiar en un solo lugar: la constante de acá abajo.
 
-/** {x, y} del backend -> coordenada de mapa proyectada (EPSG:3857). */
+/** Proyección del `ol.View`. Única fuente de verdad del sistema. */
+export const PROYECCION_MAPA = 'EPSG:4326';
+
+/** {x, y} del backend -> coordenada de mapa proyectada. */
 export function xyAMapa(punto) {
-  return ol.proj.fromLonLat([Number(punto.x), Number(punto.y)]);
+  return ol.proj.fromLonLat([Number(punto.x), Number(punto.y)], PROYECCION_MAPA);
 }
 
 /**
@@ -28,19 +34,43 @@ export function entidadAMapa(entidad) {
   const x = entidad?.posicion_x ?? entidad?.posicion_base_x;
   const y = entidad?.posicion_y ?? entidad?.posicion_base_y;
   if (x === null || x === undefined || y === null || y === undefined) return null;
-  const punto = ol.proj.fromLonLat([Number(x), Number(y)]);
+  const punto = ol.proj.fromLonLat([Number(x), Number(y)], PROYECCION_MAPA);
   return Number.isFinite(punto[0]) && Number.isFinite(punto[1]) ? punto : null;
 }
 
 /** Coordenada de mapa proyectada -> {x, y} para enviar al backend. */
 export function mapaAXY(coordenada) {
-  const lonLat = ol.proj.toLonLat(coordenada);
+  const lonLat = ol.proj.toLonLat(coordenada, PROYECCION_MAPA);
   return { x: lonLat[0], y: lonLat[1] };
 }
 
 /** [lon, lat] -> coordenada de mapa proyectada. */
 export function lonLatAMapa(lonLat) {
-  return ol.proj.fromLonLat(lonLat);
+  return ol.proj.fromLonLat(lonLat, PROYECCION_MAPA);
+}
+
+/** Coordenada de mapa proyectada -> [lon, lat]. */
+export function mapaALonLat(coordenada) {
+  return ol.proj.toLonLat(coordenada, PROYECCION_MAPA);
+}
+
+/**
+ * Un radio en metros no se puede usar tal cual como radio de un
+ * `ol.geom.Circle`: las unidades del mapa no son metros. En EPSG:4326 son
+ * grados, y un grado de longitud mide menos cuanto más lejos del ecuador, así
+ * que la conversión depende de la latitud. (En EPSG:3857 la corrección es la
+ * inversa —multiplicar por 1/cos— porque Mercator estira la escala; por eso
+ * vive acá y no repartida por los módulos que dibujan círculos.)
+ */
+export function metrosAUnidadesMapa(metros, lat) {
+  const m = Number(metros);
+  if (!isFinite(m)) return 0;
+  const coseno = Math.cos(((Number(lat) || 0) * Math.PI) / 180);
+  if (PROYECCION_MAPA === 'EPSG:4326') {
+    const METROS_POR_GRADO = 111320;
+    return m / (METROS_POR_GRADO * Math.max(coseno, 0.01));
+  }
+  return m / Math.max(coseno, 0.01);
 }
 
 /** Distancia en metros entre dos {x, y} (Haversine). Solo para mostrar. */
@@ -75,4 +105,15 @@ export function formatearDuracion(segundos) {
   return `${sec}s`;
 }
 
-export default { xyAMapa, entidadAMapa, mapaAXY, lonLatAMapa, distanciaMetros, formatearDistancia, formatearDuracion };
+export default {
+  PROYECCION_MAPA,
+  xyAMapa,
+  entidadAMapa,
+  mapaAXY,
+  lonLatAMapa,
+  mapaALonLat,
+  metrosAUnidadesMapa,
+  distanciaMetros,
+  formatearDistancia,
+  formatearDuracion,
+};

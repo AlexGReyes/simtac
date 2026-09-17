@@ -8,7 +8,10 @@ existe**, con el porqué y una propuesta concreta de contrato.
 Cada ítem dice qué hace hoy el frontend para compensar la falta, así que también
 sirve de checklist de qué código del cliente se puede borrar cuando esté hecho.
 
-**Estado:** actualizado 10-08-2026. Los puntos 1–20 están **cubiertos**. El
+**Estado:** actualizado 10-09-2026. Los puntos 1–20 están **cubiertos**; el
+punto 21 (alcanzar el backend desde otra máquina, agregado el 09-09-2026) está
+**parcial** — ver el detalle en su sección, queda un paso fuera de esta sesión
+para terminar de activarlo. El
 **punto 19 — boletines dirigidos a un solo bando** y el **punto 20 — hora
 táctica autoritativa del servidor** se implementaron el mismo día que se
 agregaron a este documento: `boletin:enviar` ya acepta `bando` opcional y
@@ -63,9 +66,22 @@ mismo día** — ver el detalle en su sección.
 | 18 | Logística: km/munición/autonomía, bajas, destruidos y recarga | ~~P2~~ hecho | `autonomia_actual` separado del odómetro, `logistica:recargar`, y un bloque `logistica{}` acumulado por el motor — ver detalle abajo |
 | 19 | Boletines dirigidos a un solo bando | ~~P2~~ hecho | `boletin:enviar` acepta `bando` opcional; con él, emite solo a `ejercicio_{id}_bando_{bando}` |
 | 20 | Hora táctica autoritativa del servidor | ~~P2~~ hecho | `hora_tactica` en el estado, avanzada por el `CombateEngine`, pausable con el ejercicio, ajustable a mano (`ejercicio:establecer_hora_tactica`) y `velocidad_ejercicio` entero de efecto inmediato — ver detalle abajo |
+| 21 | El backend no es alcanzable desde otra máquina: escucha en loopback y rutea por `Host` | P1 al desplegar en LAN | **Parcial** — el ruteo por `Host` ya está arreglado y verificado; el binding a loopback quedó configurado (mirrored networking) pero falta un paso fuera de esta sesión para activarlo, y la IP fija sigue sin decidir — ver detalle abajo |
 
 Los puntos 1 a 20 quedan acá **como historial** — no queda trabajo
-pendiente **del lado del backend** en este documento.
+pendiente **del lado del backend** entre ellos.
+
+**Punto 21 (09-09-2026): abierto, verificado contra el servidor.** Es el único
+pendiente. No es un hueco funcional ni pide endpoints nuevos: nace de que la URL
+del backend dejó de estar clavada en el código (`config.js`), con lo que el
+servidor Node puede quedar en otra máquina de la LAN — y al comprobar que eso
+funcionara aparecieron dos cosas que hoy lo impiden. **El CORS ya estaba bien**
+(REST, preflight y Socket.IO, todo con `Allow-Origin: *`), así que esa parte del
+pedido original se cerró sin trabajo. Falta: el puerto está publicado solo en
+`127.0.0.1` y el proxy rutea **por header `Host`**, así que abrir el puerto no
+alcanza por sí solo. Se suma la necesidad de una **IP fija** o un nombre DNS: el
+mismo día, la cartografía se cayó una sesión entera por una IP de DHCP que
+cambió de dueño (detalle en la sección).
 
 **Auditoría 10-08-2026:** se releyó el código actual de `src/` (el frontend
 tuvo una reescritura grande en módulos, sin commitear todavía) contra cada
@@ -2288,12 +2304,271 @@ comportamiento aparte — avisar cuál es el caso real.
 
 ---
 
+## 21 · El backend no es alcanzable desde otra máquina: escucha en loopback y rutea por `Host` — P1 al desplegar en LAN
+
+**Agregado 09-09-2026, verificado el mismo día contra el servidor real.** Sale de
+haber integrado la cartografía del SIMTAC GeoServer (réplica Docker en un Mac de
+la LAN, `INTEGRACION_RED_LOCAL_MAC.md`). Al hacerlo, la URL del backend dejó de
+estar clavada en el código y pasó a ser configurable (`config.js`, clave
+`backend`), con lo que **el servidor Node ya no tiene por qué correr en la misma
+máquina que la app** — y al ir a comprobar que eso funcionara, aparecieron dos
+cosas que hoy lo impiden.
+
+> **Qué está bien y qué no** — comprobado con `curl` contra el servidor que
+> atiende `http://node.localhost`, no deducido:
+>
+> | | Estado |
+> |---|---|
+> | CORS del REST | ✅ ya resuelto — `Access-Control-Allow-Origin: *` |
+> | Preflight `OPTIONS` | ✅ ya resuelto — `204`, con `authorization,content-type` permitidos y `GET,HEAD,PUT,PATCH,POST,DELETE` |
+> | CORS del handshake de Socket.IO | ✅ ya resuelto — `200` con `Allow-Origin: *` en `/socket.io/?EIO=4&transport=polling` |
+> | Escucha en la red | ❌ **solo `127.0.0.1:80` y `[::1]:80`** |
+> | Ruteo | ❌ **por `Host`**: `Host: node.localhost` → `200`; `Host: 127.0.0.1` → `404` |
+>
+> O sea: **la parte difícil (CORS) ya está hecha y no hay que tocar nada**. Lo
+> que falta es de red y de ruteo.
+
+### 1. El puerto está publicado solo en loopback
+
+`netstat` en la máquina del servidor:
+
+```
+TCP    127.0.0.1:80    0.0.0.0:0    LISTENING    wslrelay.exe
+TCP    [::1]:80        [::]:0       LISTENING    wslrelay.exe
+```
+
+No hay un `0.0.0.0:80`, así que **ninguna otra máquina de la red llega**, por
+más bien configurado que esté todo lo demás. El backend corre dentro de WSL2 y
+el relay de WSL liga a loopback por defecto (`localhostForwarding`).
+
+Lo que se pide: publicarlo en `0.0.0.0` — la vía concreta depende de cómo esté
+armado el despliegue (`networkingMode=mirrored` en `.wslconfig`, un
+`netsh interface portproxy`, cambiar el mapeo de puertos del compose si el
+binding viene de ahí, o sacar el stack de WSL). Es el mismo cambio que ya hizo
+el GeoServer: `SIMTAC_GEOSERVER_BIND_ADDRESS=0.0.0.0`.
+
+### 2. El ruteo es por `Host`, y eso no se arregla solo con abrir el puerto
+
+Este es el que no es obvio, y por eso vale la pena leerlo antes de tocar nada:
+
+```
+curl -H "Host: node.localhost" http://127.0.0.1/health   →  200
+curl                          http://127.0.0.1/health   →  404
+```
+
+El proxy de adelante (Traefik, según `API.md`) elige el backend **por el header
+`Host`**, y solo tiene regla para `node.localhost`. Entonces, aunque se publique
+el puerto en `0.0.0.0`, apuntar la app a `http://<ip>:80` **va a devolver 404**:
+el navegador manda `Host: <ip>`, que no matchea ninguna regla. Y un cliente de
+navegador **no puede** mandar un `Host` distinto del de la URL — es un header
+prohibido, lo fija el propio navegador; no hay nada que el cliente pueda hacer
+desde su lado.
+
+Tres salidas posibles, a elección de quien opera el servidor:
+
+- **Agregar una regla de router** que matchee con lo que van a usar los clientes
+  (la IP del host, o un `HostRegexp` amplio) además de la de `node.localhost`.
+- **Publicar el puerto del contenedor Node directo** (p. ej. `3000:3000` en
+  `0.0.0.0`), sin pasar por el proxy, y que los equipos de la LAN usen
+  `http://<ip>:3000`. Es lo más parecido a lo que hace el GeoServer, que expone
+  su `3001` sin proxy delante.
+- **Darle un nombre DNS en la LAN** al host y agregar ese nombre a la regla del
+  router. Es la mejor de las tres: sobrevive a un cambio de IP sin tener que
+  editar el archivo de configuración de cada equipo.
+
+### 3. Ojo: `http://node.localhost` no sirve desde otra máquina
+
+Es la trampa en la que es fácil caer al configurar el segundo equipo. Por
+RFC 6761, `*.localhost` resuelve a **loopback en la máquina donde se pregunta**,
+no en el servidor. Si en otro equipo se deja `"backend": "http://node.localhost"`
+en el `config.json`, va a intentar conectarse **a sí mismo** y fallar, con un
+error que no dice nada de todo esto. Desde otra máquina hay que usar sí o sí una
+IP o un nombre DNS real de la red.
+
+### Qué NO se pide
+
+Ningún endpoint, evento ni campo nuevo: mismos ids, mismos payloads, mismos
+acks. Es configuración de red y de ruteo. **El CORS ya está bien** — el pedido
+original de este punto incluía revisarlo y se comprobó que no hacía falta.
+
+### Cómo verificarlo cuando esté
+
+Desde **otro** equipo de la LAN, con `<ip>` la del servidor:
+
+```bash
+# 1. ¿Escucha fuera de loopback y el ruteo acepta este host?
+curl -s -o /dev/null -w "%{http_code}\n" http://<ip>:<puerto>/health     # 200, no 404
+
+# 2. ¿El handshake del socket pasa?
+curl -s -D- -o /dev/null "http://<ip>:<puerto>/socket.io/?EIO=4&transport=polling" | head -1
+```
+
+Un `404` en el primero significa que el puerto ya abre pero el ruteo por `Host`
+sigue sin regla (punto 2); un timeout o "connection refused", que todavía está
+en loopback (punto 1).
+
+Del lado del cliente, el panel 🗺 de la app tiene **Probar conexión**, que prueba
+el backend y la cartografía y dice cuál de los dos falla; y al arrancar loguea de
+qué origen salió cada URL (`[config] backend = ... (config.json del despliegue)`).
+
+### Ampliación 09-09-2026 — la IP tiene que ser estable, y ya se rompió una vez
+
+Esto no es teórico. El mismo día que se agregó este punto, la app quedó **sin
+cartografía** durante una sesión: el `config.json` apuntaba a la IP de **Wi-Fi**
+del servidor de mapas (`10.40.0.24`, por DHCP) y el lease había cambiado de
+mano. Síntomas exactos, por si le pasa a alguien con el backend:
+
+- Consola llena de `net::ERR_CONNECTION_TIMED_OUT`, uno por cada petición.
+- **No** es un "conexión rechazada" inmediato: la IP existía y contestaba el
+  ping —se la había quedado otro equipo de la red— pero nadie escuchaba en ese
+  puerto, así que cada intento se quedaba colgado ~20 s hasta expirar.
+- Desde la interfaz no se veía ninguna diferencia con "acá no hay datos".
+
+Se resolvió apuntando a la IP de **Ethernet** (`172.200.1.17`), que es fija.
+
+**Qué se pide para el backend:** que el host donde corre el servidor Node tenga
+**IP fija**, o mejor un nombre DNS resoluble en la LAN — que además resuelve de
+paso el problema de ruteo del punto 2, porque ese nombre es el que iría en la
+regla del router. Si el backend queda en una máquina con IP por DHCP, el mismo
+fallo se repite —y con el backend es peor que con los mapas: no es que falte el
+fondo del mapa, es que no hay login, ni socket, ni ejercicio.
+
+### Lo que el cliente ya hace solo — no hace falta implementar nada
+
+El panel 🗺 tiene un botón **Probar conexión** que ahora prueba **los dos**
+servidores y dice cuál falla. Contra el backend usa `GET {backend}/health`, que
+ya existe (`API.md`, sección de troubleshooting del socket), con un timeout
+corto de 6 s para no hacer esperar los ~20 s del timeout del sistema.
+
+Dos cosas a tener en cuenta si alguna vez se toca ese endpoint:
+
+- La prueba distingue tres desenlaces: **2xx** = es el backend y está vivo;
+  **otra respuesta HTTP** = hay un servidor ahí pero no es el backend (que es
+  exactamente lo que se ve cuando el ruteo por `Host` del punto 2 no matchea:
+  Traefik devuelve `404`); **fallo de red** = puerto cerrado o timeout. Están
+  separados justamente porque se arreglan en lugares distintos.
+- Lo único que la haría inútil es que `/health` pase a ser **lento** o a
+  **requerir token**: se usa justamente cuando todavía no hay sesión, para
+  distinguir "el servidor está caído" de "la dirección apunta a cualquier lado".
+  Si en algún momento se agrega autenticación global por middleware, dejarlo
+  fuera.
+
+No se pide ningún endpoint nuevo.
+
+### Actualización 10-09-2026 — ruteo arreglado y verificado; binding configurado, falta un paso de quien opera el servidor
+
+**1. Ruteo por `Host` — hecho y verificado.** `traefik/dynamic.yml` ya no
+exige `Host(\`node.localhost\`)`: como `node-app` es el único servicio detrás
+de este proxy, la regla pasó a `PathPrefix(\`/\`)`, que no mira el header
+`Host` para nada. Verificado con `curl` contra el servidor real (no
+deducido), antes y después:
+
+```
+# antes
+curl -H "Host: node.localhost" http://127.0.0.1/health   → 200
+curl -H "Host: 172.24.101.30"  http://127.0.0.1/health   → 404
+curl                           http://127.0.0.1/health   → 404
+
+# después
+curl -H "Host: node.localhost" http://127.0.0.1/health   → 200
+curl -H "Host: 172.24.101.30"  http://127.0.0.1/health   → 200
+curl                           http://127.0.0.1/health   → 200
+```
+
+Mismo resultado para el handshake de Socket.IO
+(`/socket.io/?EIO=4&transport=polling`) con `Host` arbitrario: `200`.
+`http://node.localhost` para dev local sigue andando igual que antes — no es
+un cambio incompatible, solo se sacó una restricción.
+
+**Ojo con un detalle de Docker al tocar este archivo de nuevo:**
+`docker-compose.yml` monta `dynamic.yml` como bind mount de **un solo
+archivo** (`./dynamic.yml:/etc/traefik/dynamic.yml:ro`), y Docker liga ese
+mount al **inodo**, no a la ruta. Si el archivo se reemplaza por
+edición-y-rename (lo que hacen la mayoría de los editores, no solo
+herramientas automatizadas), el contenedor se queda mirando el inodo viejo
+para siempre — ni `--providers.file.watch=true` lo detecta, porque el watch
+también apunta al inodo viejo. Pasó al aplicar este cambio: hubo que
+`docker compose restart traefik` para que se viera. Si en el futuro
+`dynamic.yml` se edita y Traefik no refleja el cambio (`curl` a
+`:8080/api/http/routers` sigue mostrando la regla vieja), no es un bug nuevo:
+reiniciar el contenedor lo resuelve.
+
+**2. Binding a la LAN — configurado, falta activarlo desde Windows.**
+Confirmado con `netstat`/`docker ps` que el bug es real y está descrito bien
+en la sección original: Docker publica `0.0.0.0:80` **dentro** de la
+distro WSL2, pero el relay de WSL2 hacia Windows (`wslrelay.exe`, modo NAT
+por defecto) solo reenvía desde `127.0.0.1`/`[::1]` de Windows — nunca desde
+la interfaz LAN. No hay ningún `.wslconfig` en esta máquina todavía, así que
+está en el modo por defecto.
+
+De las salidas que planteaba la sección original, se optó por **mirrored
+networking** (Windows 11 22H2+, WSL ≥ 2.0 — esta máquina cumple las dos
+cosas: build 10.0.26200, WSL 2.3.26): comparte la red de Windows directo con
+WSL2, así que cualquier puerto que Docker publique en `0.0.0.0` queda
+accesible desde toda la LAN sin reglas adicionales ni reconfigurar nada cada
+vez que cambia la IP interna de WSL (que es justamente el problema de la
+alternativa, `netsh portproxy`).
+
+Ya se escribió `C:\Users\agrey\.wslconfig`:
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+**Lo que falta, y por qué no se hizo desde acá:** este cambio no toma efecto
+hasta un `wsl --shutdown`, y ese comando **tiene que correr desde una
+consola de Windows** (PowerShell o cmd), no desde dentro de esta sesión de
+WSL — ejecutarlo desde acá cortaría la sesión a mitad de camino. Pasos para
+quien opere el servidor:
+
+1. Cerrar Docker Desktop si corre como app aparte (no aplica acá, es
+   `dockerd` nativo en la distro).
+2. Desde PowerShell o cmd **de Windows**: `wsl --shutdown`.
+3. Volver a abrir la terminal WSL y levantar el stack de nuevo (`traefik`,
+   `postgres`, `nodejs`, en ese orden — ver "Common commands" en
+   `CLAUDE.md`).
+4. Verificar desde **otra máquina** de la LAN, con `<ip>` la IP que tenga
+   Windows en ese momento:
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" http://<ip>/health   # 200 esperado
+   ```
+   Si da `200`, los puntos 1 y 2 de esta sección quedan cerrados juntos: el
+   binding ahora sale por todas las interfaces de Windows (mirrored), y el
+   ruteo por `Host` ya no filtra nada (arreglo de arriba).
+
+**3. IP fija / DNS — sigue sin decidir.** Mirrored networking resuelve el
+binding, pero la IP con la que hay que configurar `config.json` en cada
+cliente sigue siendo la que Windows tenga en su interfaz Ethernet/Wi-Fi en
+ese momento — el mismo riesgo de DHCP que ya causó el corte de cartografía
+de la sección original. Queda pendiente que quien opere el servidor fije esa
+IP (reserva DHCP en el router, o IP estática en la interfaz de Windows) o le
+dé un nombre DNS resoluble en la LAN. No es algo que se pueda hacer desde
+este repo ni desde esta sesión — es configuración del router o de Windows.
+
+**Resumen de qué falta, en orden:** (a) correr `wsl --shutdown` desde
+Windows y relevantar el stack — 5 minutos; (b) decidir IP fija o nombre DNS
+para el host — depende del router, fuera de este repo. Ninguno de los dos
+pide tocar más código.
+
+### Lo que NO cambia para el backend
+
+El mapa pasó a **EPSG:4326** (el único gridset sembrado en el GeoServer) en vez
+del Web Mercator que usaba OpenLayers por defecto. **Eso es puramente del
+cliente**: `posicion_x` sigue siendo longitud y `posicion_y` latitud, en grados,
+con los mismos rangos y la misma precisión de siempre. No hay que tocar nada del
+motor, del JSON del ejercicio ni de la base por este cambio.
+
+---
+
 ## Cómo hablamos hoy
 
 Para contexto de quien tome estos pedidos:
 
-- **REST** en `http://node.localhost` — CRUD de configuración (fase 2). Ids como
-  **string**. Token en `Authorization: Bearer`.
+- **REST** en `http://node.localhost` **por defecto** — desde 09-09-2026 la URL
+  es configurable en el cliente (`config.js`, clave `backend`), así que el
+  servidor puede estar en otra máquina; ver punto 21. CRUD de configuración
+  (fase 2). Ids como **string**. Token en `Authorization: Bearer`.
 - **Socket.IO** — todo lo que pasa durante el ejercicio (fases 3 a 8). Ids como
   **number**. Toda acción del cliente usa **ack**: `socket.js` → `emitir()`
   devuelve una promesa que rechaza con el mensaje del backend cuando

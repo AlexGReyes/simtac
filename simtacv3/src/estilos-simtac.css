@@ -300,6 +300,137 @@
 .mapa-btn:hover { border-color: var(--sim-oro); color: var(--sim-oro); }
 .mapa-btn.activo { background: rgba(var(--sim-oro-rgb), 0.25); color: var(--sim-oro); border-color: var(--sim-oro); }
 
+/* ============ Fase 3 · Panel de cartografía (GeoServer) ============ */
+
+/* Se abre desde el botón 🗺 de la barra del mapa. Comparte la fila de arriba
+   con la barra (`top: 96px`) y queda a su izquierda para no taparla. */
+.capas-panel,
+.cartografia-info {
+  position: fixed;
+  top: 96px;
+  right: 60px;
+  width: 320px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  background: var(--sim-fondo);
+  border: 1px solid var(--sim-oro);
+  border-radius: 6px;
+  z-index: 950;
+  display: none;
+  font-size: 12px;
+  color: var(--sim-texto);
+}
+.capas-panel.activo,
+.cartografia-info.activo { display: block; }
+
+/* El resultado de la consulta baja para no pisar el panel de capas cuando los
+   dos están abiertos. */
+.cartografia-info { top: auto; bottom: 24px; max-height: 45vh; }
+
+.capas-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--sim-borde-suave);
+  color: var(--sim-oro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.capas-cerrar {
+  background: none;
+  border: none;
+  color: var(--sim-texto);
+  cursor: pointer;
+  font-size: 13px;
+}
+.capas-cerrar:hover { color: var(--sim-oro); }
+
+.capas-seccion { padding: 10px; border-bottom: 1px solid var(--sim-borde-suave); }
+.capas-seccion:last-child { border-bottom: none; }
+
+.capas-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--sim-oro-crema);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.capas-label-sep { margin-top: 12px; }
+.capas-fila { display: flex; gap: 6px; }
+.capas-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 7px;
+  background: rgba(var(--sim-negro-rgb), 0.35);
+  border: 1px solid var(--sim-borde-suave);
+  border-radius: 3px;
+  color: var(--sim-texto);
+  font-size: 11px;
+  font-family: inherit;
+}
+.capas-input:focus { outline: none; border-color: var(--sim-oro); }
+.capas-btn {
+  padding: 5px 9px;
+  background: rgba(var(--sim-oro-rgb), 0.15);
+  border: 1px solid var(--sim-oro);
+  border-radius: 3px;
+  color: var(--sim-oro);
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.capas-btn:hover { background: rgba(var(--sim-oro-rgb), 0.3); }
+.capas-btn-ancho { width: 100%; margin-top: 6px; }
+
+.capas-nota,
+.capas-estado {
+  margin: 6px 0 0;
+  color: rgba(var(--sim-texto-rgb), 0.65);
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.capas-estado.ok { color: var(--sim-verde); }
+.capas-estado.error { color: var(--sim-rojo); }
+
+.capas-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  cursor: pointer;
+}
+.capas-check em { color: rgba(var(--sim-texto-rgb), 0.6); font-style: normal; }
+
+.capas-lista { max-height: 200px; overflow-y: auto; margin-top: 8px; }
+.capas-lista .capas-check { margin: 0 0 4px; font-size: 11px; }
+.capas-lista .capas-check span { word-break: break-all; }
+
+.cartografia-info-cuerpo { padding: 10px; }
+.cartografia-info-capa {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--sim-borde-suave);
+}
+.cartografia-info-capa:last-child { margin-bottom: 0; border-bottom: none; }
+.cartografia-info-capa h4 {
+  margin: 0 0 5px;
+  color: var(--sim-oro);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.cartografia-info-campo { display: flex; gap: 8px; margin-bottom: 2px; }
+.cartografia-info-campo dt {
+  flex: 0 0 40%;
+  color: rgba(var(--sim-texto-rgb), 0.6);
+  word-break: break-word;
+}
+.cartografia-info-campo dd { flex: 1; margin: 0; word-break: break-word; }
+
 /* ===================== Fase 3 · Panel de entidad ===================== */
 
 .panel-entidad {

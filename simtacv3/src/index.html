@@ -126,7 +126,74 @@
         <button id="mapa-encuadrar" class="mapa-btn" title="Encuadrar todas las entidades">⤢</button>
         <button id="mapa-rangos" class="mapa-btn" title="Círculos de rango de visión">◎</button>
         <button id="mapa-arrastrar" class="mapa-btn" title="Reposicionar entidades arrastrándolas (administrador)" style="display: none;">✋</button>
+        <button id="mapa-consulta" class="mapa-btn" title="Consultar la cartografía en un punto (GetFeatureInfo)">🛈</button>
+        <button id="mapa-capas" class="mapa-btn" title="Capas cartográficas (GeoServer)">🗺</button>
         <button id="mapa-cambiar-ejercicio" class="mapa-btn" title="Volver a la selección de ejercicio">⇄</button>
+      </div>
+
+      <!-- Cartografía SIMTAC GeoServer: la base WMTS se elige sola por zoom
+           (ver `geoserver.js`), acá va lo que el usuario decide. -->
+      <div id="capas-panel" class="capas-panel">
+        <div class="capas-panel-header">
+          <span>Cartografía</span>
+          <button id="capas-cerrar" class="capas-cerrar" title="Cerrar">✕</button>
+        </div>
+
+        <div class="capas-seccion">
+          <label class="capas-label" for="capas-url">Cartografía (GeoServer)</label>
+          <div class="capas-fila">
+            <input id="capas-url" class="capas-input" type="text" spellcheck="false"
+                   placeholder="http://10.40.0.24:3001/geoserver" />
+            <button id="capas-url-aplicar" class="capas-btn">Aplicar</button>
+          </div>
+          <p id="capas-origen" class="capas-nota">—</p>
+
+          <label class="capas-label capas-label-sep" for="capas-backend">Backend (simulación)</label>
+          <div class="capas-fila">
+            <input id="capas-backend" class="capas-input" type="text" spellcheck="false"
+                   placeholder="http://node.localhost" />
+            <button id="capas-backend-aplicar" class="capas-btn">Aplicar</button>
+          </div>
+          <p id="capas-backend-origen" class="capas-nota">—</p>
+          <!-- Cambiar el backend en caliente dejaría el socket y la sesión
+               apuntando al servidor viejo: se guarda y se reinicia la app. -->
+          <p class="capas-nota">El backend se aplica al reiniciar la aplicación.</p>
+
+          <p id="capas-estado" class="capas-estado">Sin verificar</p>
+          <button id="capas-probar" class="capas-btn capas-btn-ancho">Probar conexión</button>
+          <button id="capas-url-restablecer" class="capas-btn capas-btn-ancho">Restablecer al config del despliegue</button>
+          <p id="capas-archivo" class="capas-nota">—</p>
+        </div>
+
+        <div class="capas-seccion">
+          <span class="capas-label">Base (automática por zoom)</span>
+          <p id="capas-grupo" class="capas-nota">—</p>
+          <label class="capas-check">
+            <input id="capas-satelite" type="checkbox" />
+            <span>Mosaico satelital <em>(z12–18)</em></span>
+          </label>
+          <p id="capas-satelite-estado" class="capas-nota">Disponibilidad sin verificar</p>
+        </div>
+
+        <div class="capas-seccion capas-seccion-lista">
+          <span class="capas-label">Capas temáticas (WMS)</span>
+          <div class="capas-fila">
+            <input id="capas-filtro" class="capas-input" type="search" placeholder="Filtrar (ej. inst_mil)" />
+            <button id="capas-cargar" class="capas-btn">Cargar</button>
+          </div>
+          <div id="capas-lista" class="capas-lista">
+            <p class="capas-nota">Pulsá «Cargar» para leer el catálogo del servidor.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resultado de GetFeatureInfo. -->
+      <div id="cartografia-info" class="cartografia-info">
+        <div class="capas-panel-header">
+          <span>Punto consultado</span>
+          <button id="cartografia-info-cerrar" class="capas-cerrar" title="Cerrar">✕</button>
+        </div>
+        <div id="cartografia-info-cuerpo" class="cartografia-info-cuerpo"></div>
       </div>
 
       <div id="coordinates-panel" class="coordinates-panel">

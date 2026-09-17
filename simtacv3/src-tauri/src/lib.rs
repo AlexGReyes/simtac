@@ -118,6 +118,53 @@ fn borrar_sesion(app: tauri::AppHandle) -> Result<(), String> {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Configuración del despliegue (hoy: la URL del GeoServer)
+//
+// `src/config.json` viaja DENTRO del binario en un build de release, así que no
+// sirve para que el operador cambie la IP en una máquina ya instalada. Este
+// archivo vive en el directorio de configuración de la app —el mismo que
+// `sesion.json`— y por eso sí se puede editar con un bloc de notas sin
+// recompilar ni reinstalar nada. Tiene prioridad sobre `config.json`.
+//
+// Es un JSON opaco para Rust (se guarda y se devuelve tal cual): quien decide
+// qué claves tiene es el frontend (`geoserver.js`), no este archivo.
+// ---------------------------------------------------------------------------
+
+fn ruta_config(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| format!("No se pudo resolver el directorio de configuración: {}", e))?;
+    fs::create_dir_all(&dir)
+        .map_err(|e| format!("No se pudo crear {:?}: {}", dir, e))?;
+    Ok(dir.join("config.json"))
+}
+
+#[tauri::command]
+fn leer_config(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    let ruta = ruta_config(&app)?;
+    match fs::read_to_string(&ruta) {
+        Ok(contenido) => Ok(Some(contenido)),
+        // Que no exista es lo normal en una instalación recién puesta: se cae a
+        // `config.json` del despliegue, no es un error que haya que reportar.
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
+        Err(e) => Err(format!("No se pudo leer {:?}: {}", ruta, e)),
+    }
+}
+
+#[tauri::command]
+fn guardar_config(app: tauri::AppHandle, datos: String) -> Result<(), String> {
+    let ruta = ruta_config(&app)?;
+    fs::write(&ruta, datos).map_err(|e| format!("No se pudo escribir {:?}: {}", ruta, e))
+}
+
+/// Ruta del archivo, para poder mostrársela al operador que lo tiene que editar.
+#[tauri::command]
+fn ruta_config_usuario(app: tauri::AppHandle) -> Result<String, String> {
+    Ok(ruta_config(&app)?.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -127,7 +174,10 @@ pub fn run() {
             cargar_estado_actual,
             guardar_sesion,
             leer_sesion,
-            borrar_sesion
+            borrar_sesion,
+            leer_config,
+            guardar_config,
+            ruta_config_usuario
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

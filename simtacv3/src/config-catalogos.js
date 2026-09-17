@@ -23,6 +23,7 @@ import Session from './session.js';
 import Store from './store.js';
 import Socket from './socket.js';
 import Mapa from './mapa.js';
+import { xyAMapa, mapaALonLat } from './geo.js';
 import Simbolo from './simbolo.js';
 import * as Sidc from './sidc.js';
 import { esc, toast, toastError, toastExito, toastAviso, confirmar } from './ui.js';
@@ -1149,7 +1150,7 @@ function dibujarPuntosEnMapa(puntos) {
   const fuente = capa.getSource();
   fuente.clear();
   if (!puntos?.length) return;
-  const coords = puntos.map((p) => ol.proj.fromLonLat([Number(p.x), Number(p.y)]));
+  const coords = puntos.map((p) => xyAMapa(p));
   coords.forEach((c) => fuente.addFeature(new ol.Feature({ geometry: new ol.geom.Point(c) })));
   if (coords.length > 1) fuente.addFeature(new ol.Feature({ geometry: new ol.geom.LineString(coords) }));
 }
@@ -1176,7 +1177,7 @@ function tomarPuntos(maximo, alTerminar, iniciales = []) {
 
 function alClicDeCaptura(evento) {
   if (!dibujo) return;
-  const [x, y] = ol.proj.toLonLat(evento.coordinate);
+  const [x, y] = mapaALonLat(evento.coordinate);
   dibujo.puntos.push({ x, y });
   dibujarPuntosEnMapa(dibujo.puntos);
   if (dibujo.puntos.length >= dibujo.maximo) terminarCaptura(true);

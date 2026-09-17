@@ -1,6 +1,7 @@
 // Cliente HTTP del backend.
 //
-// - Base `http://node.localhost`, header `Authorization: Bearer <token>`.
+// - Base configurable (`config.js`, clave `backend`; por defecto
+//   `http://node.localhost`), header `Authorization: Bearer <token>`.
 // - Todos los errores del backend tienen la forma { error: "mensaje" }.
 // - Interceptor de 401: intenta UN refresh, reintenta la request original y, si
 //   el refresh también falla, avisa que la sesión murió (evento
@@ -9,8 +10,73 @@
 //   deja de servir, así que se guarda siempre el nuevo.
 
 import Session from './session.js';
+import Config from './config.js';
 
-export const API_BASE = 'http://node.localhost';
+/**
+ * Base del backend Node. Es `let` a propósito: `Config.cargar()` corre al
+ * arrancar y `sincronizarBase()` la actualiza, y como los módulos ES tienen
+ * enlaces vivos, quien la importó (`socket.js`, `admin.js`) ve el valor nuevo
+ * sin volver a importar nada. Todas las lecturas ocurren dentro de funciones,
+ * nunca al cargar el módulo, así que ninguna se queda con el valor viejo.
+ */
+export let API_BASE = Config.backend();
+
+/** Realinea la base con la configuración ya resuelta. La llama `app.js`. */
+export function sincronizarBase() {
+  API_BASE = Config.backend();
+  return API_BASE;
+}
+
+/**
+ * ¿Se llega al backend? Es para el panel de configuración: sirve para
+ * distinguir "el servidor está caído" de "la dirección apunta a cualquier
+ * lado", que desde la app se ven igual (todo falla).
+ *
+ * Distingue tres desenlaces, porque desde la app los tres se ven igual (todo
+ * falla) pero se arreglan en lugares distintos:
+ *
+ *   - `"ok"`      — `/health` contesta 2xx: es el backend y está vivo.
+ *   - `"ajeno"`   — contesta algo, pero no 2xx. Hay un servidor de ese lado que
+ *                   no es nuestro backend, o el proxy de adelante no está
+ *                   ruteando hasta él. El caso real: el proxy rutea por header
+ *                   `Host`, así que apuntar a `http://<ip>` en vez de al nombre
+ *                   con el que tiene regla devuelve 404 (ver `backend.md`,
+ *                   punto 21). No es un problema que se resuelva del lado del
+ *                   cliente, y por eso conviene nombrarlo.
+ *   - `"caido"`   — fallo de red: host inexistente, puerto cerrado o timeout.
+ *
+ * El timeout es corto a propósito: una IP que ya no existe no rechaza la
+ * conexión, se queda colgada hasta que expira —unos 20 s en Windows— y el
+ * usuario no tiene por qué esperar eso para saber que se equivocó de dirección.
+ */
+export async function probarConexion(base = API_BASE) {
+  const control = new AbortController();
+  const reloj = setTimeout(() => control.abort(), 6000);
+  const t0 = Date.now();
+  try {
+    const respuesta = await fetch(`${base}/health`, { signal: control.signal });
+    const ms = Date.now() - t0;
+    if (respuesta.ok) {
+      return { resultado: 'ok', status: respuesta.status, detalle: `responde en ${ms} ms` };
+    }
+    return {
+      resultado: 'ajeno',
+      status: respuesta.status,
+      detalle: `contesta HTTP ${respuesta.status}: hay un servidor ahí, pero no es el backend`,
+    };
+  } catch (error) {
+    const expiro = error.name === 'AbortError';
+    return {
+      resultado: 'caido',
+      status: null,
+      detalle: expiro
+        ? 'sin respuesta en 6 s (¿dirección equivocada o servidor apagado?)'
+        : `no se pudo conectar (${error.message})`,
+    };
+  } finally {
+    clearTimeout(reloj);
+  }
+}
 
 export class ApiError extends Error {
   constructor(mensaje, status) {
@@ -144,6 +210,10 @@ export function limpiar(objeto) {
 }
 
 const Api = {
+  /** Realinea la base con la configuración resuelta (ver `sincronizarBase`). */
+  sincronizarBase,
+  probarConexion,
+
   get,
   post,
   put,

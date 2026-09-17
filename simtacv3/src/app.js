@@ -15,6 +15,9 @@ import Store from './store.js';
 import LoginUI from './login-ui.js';
 import EjerciciosUI from './ejercicios-ui.js';
 import Mapa from './mapa.js';
+import { mapaALonLat } from './geo.js';
+import Geoserver from './geoserver.js';
+import Config from './config.js';
 import PanelEntidad from './panel-entidad.js';
 import Movimiento from './movimiento.js';
 import Deteccion from './deteccion.js';
@@ -24,7 +27,7 @@ import Logistica from './logistica.js';
 import MisUnidades from './mis-unidades.js';
 import Direccion from './direccion.js';
 import Catalogos from './config-catalogos.js';
-import { toast, toastAviso, toastError } from './ui.js';
+import { toast, toastAviso, toastError, esc } from './ui.js';
 
 let modulosIniciados = false;
 let relojes = null;
@@ -133,6 +136,8 @@ function inicializarBarraMapa() {
 
   document.getElementById('mapa-cambiar-ejercicio')?.addEventListener('click', () => volverASeleccion());
 
+  inicializarPanelCartografia();
+
   // Zoom y coordenadas bajo el cursor.
   const mapa = Mapa.instancia();
   if (!mapa) return;
@@ -148,8 +153,254 @@ function inicializarBarraMapa() {
   mapa.on('pointermove', (evento) => {
     if (!coordEl || evento.dragging) return;
     // x es longitud, y es latitud: se muestran en ese orden en todo el sistema.
-    const [x, y] = ol.proj.toLonLat(evento.coordinate);
+    const [x, y] = mapaALonLat(evento.coordinate);
     coordEl.textContent = `x ${x.toFixed(5)}° · y ${y.toFixed(5)}°`;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Panel de cartografía (GeoServer)
+//
+// La base WMTS se elige sola según el zoom (`geoserver.js`): acá va lo que
+// decide el usuario — a qué servidor apuntar, si prender el satélite y qué
+// capas temáticas WMS superponer. Nada de esto llama a `/geoserver/rest/...`,
+// que es administrativo y necesita credenciales.
+// ---------------------------------------------------------------------------
+
+function inicializarPanelCartografia() {
+  const panel = document.getElementById('capas-panel');
+  const boton = document.getElementById('mapa-capas');
+  if (!panel || !boton) return;
+
+  const estado = document.getElementById('capas-estado');
+  const inputUrl = document.getElementById('capas-url');
+  const checkSatelite = document.getElementById('capas-satelite');
+  const estadoSatelite = document.getElementById('capas-satelite-estado');
+  const grupoEl = document.getElementById('capas-grupo');
+  const origenEl = document.getElementById('capas-origen');
+  const inputBackend = document.getElementById('capas-backend');
+  const origenBackendEl = document.getElementById('capas-backend-origen');
+  const archivoEl = document.getElementById('capas-archivo');
+
+  const pintarEstado = (texto, clase = '') => {
+    if (!estado) return;
+    estado.textContent = texto;
+    estado.className = `capas-estado ${clase}`;
+  };
+
+  // El panel dice de dónde salió la URL y qué archivo hay que editar para
+  // cambiarla sin pasar por acá: es la pregunta que se hace el operador.
+  const pintarOrigen = () => {
+    if (inputUrl) inputUrl.value = Config.geoserver();
+    if (origenEl) origenEl.textContent = `Origen: ${Config.origen('geoserver')}`;
+    if (inputBackend) inputBackend.value = Config.backend();
+    if (origenBackendEl) origenBackendEl.textContent = `Origen: ${Config.origen('backend')}`;
+    if (archivoEl) {
+      const ruta = Config.rutaConfigUsuario();
+      archivoEl.textContent = ruta
+        ? `Archivo editable: ${ruta}`
+        : 'Sin archivo de configuración (fuera de Tauri se guarda en el navegador).';
+    }
+  };
+  pintarOrigen();
+
+  boton.addEventListener('click', () => {
+    const abierto = panel.classList.toggle('activo');
+    boton.classList.toggle('activo', abierto);
+    if (abierto) pintarGrupoActivo();
+  });
+  document.getElementById('capas-cerrar')?.addEventListener('click', () => {
+    panel.classList.remove('activo');
+    boton.classList.remove('activo');
+  });
+
+  // El grupo base activo se muestra como diagnóstico: es la forma rápida de ver
+  // si el mapa está pidiendo el layergroup que corresponde al zoom.
+  function pintarGrupoActivo() {
+    if (!grupoEl) return;
+    const mapa = Mapa.instancia();
+    const zoom = mapa ? Math.floor(mapa.getView().getZoom()) : 0;
+    grupoEl.textContent = `z${zoom} → ${Mapa.grupoBaseActivo() || '—'}`;
+  }
+  Mapa.instancia()?.getView().on('change:resolution', pintarGrupoActivo);
+  pintarGrupoActivo();
+
+  // --- Servidor ---------------------------------------------------------
+  document.getElementById('capas-url-aplicar')?.addEventListener('click', () => {
+    try {
+      const url = Mapa.reapuntarGeoserver(inputUrl.value);
+      pintarOrigen();
+      pintarEstado(`Apuntando a ${url}`, 'ok');
+      verificarSatelite();
+    } catch (error) {
+      pintarEstado(error.message, 'error');
+    }
+  });
+
+  // Vuelve a lo que diga el `config.json` del despliegue, descartando lo que se
+  // haya escrito acá antes.
+  document.getElementById('capas-url-restablecer')?.addEventListener('click', async () => {
+    await Config.restablecer();
+    Mapa.reapuntarGeoserver(Config.geoserver());
+    pintarOrigen();
+    pintarEstado(
+      `Restablecido desde el config del despliegue. El backend (${Config.backend()}) se aplica al reiniciar.`,
+      'ok',
+    );
+    verificarSatelite();
+  });
+
+  // El backend solo se guarda: reapuntarlo en caliente dejaría el socket vivo
+  // contra el servidor anterior y la sesión emitida por otro.
+  document.getElementById('capas-backend-aplicar')?.addEventListener('click', () => {
+    try {
+      const url = Config.fijar('backend', inputBackend.value);
+      pintarOrigen();
+      pintarEstado(`Backend guardado: ${url}. Se aplica al reiniciar la aplicación.`, 'ok');
+    } catch (error) {
+      pintarEstado(error.message, 'error');
+    }
+  });
+
+  // Prueba los DOS servidores: si el mapa no carga, lo primero que hay que
+  // saber es si el problema es solo de cartografía o no se llega a nada.
+  document.getElementById('capas-probar')?.addEventListener('click', async () => {
+    pintarEstado('Probando…');
+    const [cartografia, back] = await Promise.all([
+      Geoserver.probar(),
+      Api.probarConexion(Config.backend()),
+    ]);
+    const ok = String(cartografia.capabilities).startsWith('ok') && back.resultado === 'ok';
+    pintarEstado(
+      `Backend: ${back.detalle} · ` +
+        `Cartografía — capabilities: ${cartografia.capabilities} · ` +
+        `tesela base: ${cartografia.teselaBase} · satélite: ${cartografia.satelite}`,
+      ok ? 'ok' : 'error',
+    );
+  });
+
+  // --- Satélite ---------------------------------------------------------
+  // El disco del mosaico es montable/desmontable: que no esté es un estado
+  // esperado, no una falla, así que se deshabilita el check en vez de avisar
+  // con un error.
+  async function verificarSatelite() {
+    if (!estadoSatelite || !checkSatelite) return;
+    estadoSatelite.textContent = 'Verificando disponibilidad…';
+    const disponible = await Mapa.sateliteDisponible();
+    checkSatelite.disabled = !disponible;
+    if (!disponible) {
+      checkSatelite.checked = false;
+      Mapa.alternarSatelite(false);
+      estadoSatelite.textContent = 'No publicado ahora (disco desmontado o servidor inaccesible).';
+      return;
+    }
+    estadoSatelite.textContent = 'Montado. Sin fecha de adquisición en los metadatos; resolución ~1.5 m.';
+  }
+
+  checkSatelite?.addEventListener('change', () => {
+    const activo = Mapa.alternarSatelite(checkSatelite.checked);
+    const mapa = Mapa.instancia();
+    const zoom = mapa ? Math.floor(mapa.getView().getZoom()) : 0;
+    if (activo && (zoom < Geoserver.SATELITE_ZOOM_MIN || zoom > Geoserver.SATELITE_ZOOM_MAX)) {
+      toastAviso(`El satélite se dibuja entre z${Geoserver.SATELITE_ZOOM_MIN} y z${Geoserver.SATELITE_ZOOM_MAX}; aparecerá al acercar.`);
+    }
+  });
+  verificarSatelite();
+
+  // --- Capas temáticas WMS ----------------------------------------------
+  // El catálogo se lee del GetCapabilities del propio servidor: nunca una
+  // lista fija en el cliente, que se desincroniza al publicar o retirar capas.
+  const lista = document.getElementById('capas-lista');
+  const filtro = document.getElementById('capas-filtro');
+  let catalogo = [];
+
+  const pintarLista = () => {
+    if (!lista) return;
+    const texto = (filtro?.value || '').trim().toLowerCase();
+    const activas = new Set(Mapa.capasWmsActivas());
+    const visibles = catalogo
+      .filter((capa) => !texto || capa.nombre.toLowerCase().includes(texto) || capa.titulo.toLowerCase().includes(texto))
+      .slice(0, 200); // el catálogo pasa las 390 capas: la lista se acota
+
+    if (!visibles.length) {
+      lista.innerHTML = '<p class="capas-nota">Sin coincidencias.</p>';
+      return;
+    }
+    lista.innerHTML = visibles
+      .map((capa) => `
+        <label class="capas-check">
+          <input type="checkbox" data-capa="${esc(capa.nombre)}" ${activas.has(capa.nombre) ? 'checked' : ''} />
+          <span title="${esc(capa.titulo)}">${esc(capa.nombre)}</span>
+        </label>`)
+      .join('');
+    lista.querySelectorAll('input[data-capa]').forEach((entrada) => {
+      entrada.addEventListener('change', () => Mapa.alternarCapaWms(entrada.dataset.capa));
+    });
+  };
+
+  document.getElementById('capas-cargar')?.addEventListener('click', async () => {
+    if (lista) lista.innerHTML = '<p class="capas-nota">Leyendo GetCapabilities…</p>';
+    try {
+      catalogo = await Geoserver.listarCapas();
+      pintarLista();
+    } catch (error) {
+      if (lista) lista.innerHTML = `<p class="capas-nota">No se pudo leer el catálogo: ${esc(error.message)}</p>`;
+    }
+  });
+  filtro?.addEventListener('input', pintarLista);
+
+  inicializarConsultaCartografica();
+}
+
+/**
+ * Consulta del punto (GetFeatureInfo). Es un modo aparte porque el clic normal
+ * del mapa ya está tomado por la selección de entidades: mientras está activo,
+ * `window.simtacModoMapa` avisa al resto de los módulos que no interpreten el
+ * clic como suyo.
+ */
+function inicializarConsultaCartografica() {
+  const boton = document.getElementById('mapa-consulta');
+  const panel = document.getElementById('cartografia-info');
+  const cuerpo = document.getElementById('cartografia-info-cuerpo');
+  const mapa = Mapa.instancia();
+  if (!boton || !panel || !cuerpo || !mapa) return;
+
+  let activo = false;
+
+  const cerrar = () => panel.classList.remove('activo');
+  document.getElementById('cartografia-info-cerrar')?.addEventListener('click', cerrar);
+
+  boton.addEventListener('click', () => {
+    activo = !activo;
+    boton.classList.toggle('activo', activo);
+    window.simtacModoMapa = activo ? 'cartografia' : null;
+    if (!activo) cerrar();
+    else toastAviso('Clic en el mapa para consultar la cartografía. Volvé a pulsar 🛈 para salir.');
+  });
+
+  mapa.on('singleclick', async (evento) => {
+    if (!activo) return;
+    panel.classList.add('activo');
+    cuerpo.innerHTML = '<p class="capas-nota">Consultando…</p>';
+    try {
+      const resultados = await Mapa.consultarPunto(evento.pixel);
+      const conDatos = resultados.filter((r) => Object.keys(r.propiedades).length);
+      if (!conDatos.length) {
+        cuerpo.innerHTML = '<p class="capas-nota">Sin datos en ese punto para las capas activas.</p>';
+        return;
+      }
+      cuerpo.innerHTML = conDatos
+        .map((r) => `
+          <div class="cartografia-info-capa">
+            <h4>${esc(r.capa)}</h4>
+            <dl>${Object.entries(r.propiedades)
+              .map(([k, v]) => `<div class="cartografia-info-campo"><dt>${esc(k)}</dt><dd>${esc(String(v))}</dd></div>`)
+              .join('')}</dl>
+          </div>`)
+        .join('');
+    } catch (error) {
+      cuerpo.innerHTML = `<p class="capas-nota">La consulta falló: ${esc(error.message)}</p>`;
+    }
   });
 }
 
@@ -399,6 +650,11 @@ async function arrancar() {
   registrarCierreDeVentana();
 
   console.log('=== SIMTAC ===');
+  // Antes que nada: de dónde salen el backend y la cartografía. `Api` habla con
+  // el backend apenas se revalida la sesión y `Mapa.init()` crea las capas con
+  // la URL del GeoServer ya resuelta, así que esto tiene que estar listo antes.
+  await Config.cargar();
+  Api.sincronizarBase();
   await Session.init();
 
   await LoginUI.init();

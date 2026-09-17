@@ -9,6 +9,7 @@ import Session from './session.js';
 import Socket from './socket.js';
 import Api from './api.js';
 import Mapa from './mapa.js';
+import { mapaALonLat } from './geo.js';
 import Sidc from './sidc.js';
 import { esc, toast, toastError, toastExito, toastAviso, confirmar, fechaHora } from './ui.js';
 
@@ -884,7 +885,7 @@ function tomarPuntoDelMapa() {
   window.simtacModoMapa = 'punto';
   toastAviso('Clic en el mapa para fijar la posición');
   const manejador = (evento) => {
-    const lonLat = ol.proj.toLonLat(evento.coordinate);
+    const lonLat = mapaALonLat(evento.coordinate);
     const form = document.getElementById('pd-form-alta');
     if (form) {
       form.elements.posicion_x.value = lonLat[0].toFixed(6);

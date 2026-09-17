@@ -4,8 +4,9 @@ import * as Sidc from './sidc.js';
 import Catalogos from './config-catalogos.js';
 import Store from './store.js';
 import Socket from './socket.js';
-
-const API_BASE = 'http://node.localhost';
+// Enlace vivo: `api.js` la reapunta cuando se resuelve la configuración, así
+// que no puede copiarse a una constante local.
+import { API_BASE } from './api.js';
 
 /**
  * Id del usuario dentro de una fila que lo referencia.
