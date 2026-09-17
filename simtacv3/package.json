@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
-    "test:movimiento": "node pruebas/movimiento-protocolo.mjs && node pruebas/movimiento-ruta.mjs"
+    "test:movimiento": "node pruebas/movimiento-protocolo.mjs && node pruebas/movimiento-ruta.mjs",
+    "test:movimiento:browser": "playwright test pruebas/movimiento-browser.spec.js --workers=1 --reporter=line"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tauri-apps/cli": "^2"
   },
   "dependencies": {

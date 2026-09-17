@@ -247,9 +247,11 @@ const Store = {
     this.combates.clear();
     if (this.seleccion && !this.indice.has(this.seleccion)) this.seleccion = null;
     emitir('estado', this.estado);
+    emitir('estado:reemplazado', this.estado);
   },
 
   limpiar() {
+    this.ejercicioId = null;
     this.estado = estadoVacio();
     this.indice.clear();
     this.observadores.clear();
@@ -258,6 +260,7 @@ const Store = {
     this.seleccion = null;
     this.iniciado = false;
     emitir('estado', this.estado);
+    emitir('estado:reemplazado', this.estado);
   },
 
   // --- Índice ------------------------------------------------------------
@@ -427,12 +430,15 @@ const Store = {
 
   // --- Actualizaciones puntuales -----------------------------------------
 
-  actualizarPosicion({ entidad_tipo, entidad_id, posicion_x, posicion_y, distancia_recorrida }) {
+  actualizarPosicion({ entidad_tipo, entidad_id, posicion_x, posicion_y, distancia_recorrida, autonomia_actual }) {
+    if (!Number.isFinite(posicion_x) || !Number.isFinite(posicion_y) ||
+        Math.abs(posicion_x) > 180 || Math.abs(posicion_y) > 90) return null;
     const item = this.obtener(entidad_tipo, entidad_id);
     if (!item) return null;
     item.entidad.posicion_x = Number(posicion_x);
     item.entidad.posicion_y = Number(posicion_y);
     if (distancia_recorrida !== undefined) item.entidad.distancia_recorrida = Number(distancia_recorrida);
+    if (Number.isFinite(autonomia_actual)) item.entidad.autonomia_actual = autonomia_actual;
     delete item.entidad._pendienteEnMotor;
     emitir('entidad:posicion', item);
     return item;

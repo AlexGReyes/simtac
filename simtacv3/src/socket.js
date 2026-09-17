@@ -111,7 +111,7 @@ export function desconectar() {
  * Emite con ack. Resuelve con la respuesta cuando `ok: true`, rechaza con el
  * mensaje del backend cuando `ok: false`.
  */
-export function emitir(evento, payload = {}) {
+export function emitir(evento, payload = {}, { timeoutMs = TIMEOUT_ACK_MS } = {}) {
   return new Promise((resolve, reject) => {
     if (!socket || !socket.connected) {
       reject(new Error('Sin conexión con el servidor'));
@@ -122,7 +122,7 @@ export function emitir(evento, payload = {}) {
       if (resuelto) return;
       resuelto = true;
       reject(new Error(`El servidor no respondió a "${evento}"`));
-    }, TIMEOUT_ACK_MS);
+    }, timeoutMs);
 
     socket.emit(evento, payload, (respuesta) => {
       if (resuelto) return;
@@ -136,6 +136,8 @@ export function emitir(evento, payload = {}) {
         const error = new Error(respuesta.error || `"${evento}" fue rechazado`);
         error.evento = evento;
         error.respuesta = respuesta;
+        error.code = respuesta.code;
+        error.details = respuesta.details;
         reject(error);
         return;
       }

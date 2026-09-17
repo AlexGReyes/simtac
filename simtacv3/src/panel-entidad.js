@@ -24,7 +24,7 @@ export function umbralCombate(item) {
 export function modalidadMovimiento(item) {
   if (item.tipo === 'unidad') return { terrestre: true, libre: false };
   const tipo = item.entidad.tipo;
-  if (tipo === 'anfibio') return { terrestre: true, libre: true };
+  if (tipo === 'anfibio') return { terrestre: true, libre: false };
   if (tipo === 'tierra') return { terrestre: true, libre: false };
   return { terrestre: false, libre: true };
 }

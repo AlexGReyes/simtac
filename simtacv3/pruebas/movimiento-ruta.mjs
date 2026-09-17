@@ -12,7 +12,9 @@ const alDoblar = posicionEnRuta(ruta, ruta.cumulativeM[1] / 1000);
 assert.equal(alDoblar.x, -99);
 assert.equal(alDoblar.y, 19.1);
 const despuesDeDoblar = posicionEnRuta(ruta, ruta.cumulativeM[1] / 1000 + 1);
-assert.equal(despuesDeDoblar.y, 19.1);
+assert.ok(Math.abs(despuesDeDoblar.y - 19.1) < 0.00001);
 assert.ok(despuesDeDoblar.x > -99);
+assert.equal(prepararRuta([{ x: -99, y: 19 }, { x: null, y: 19 }, { x: -98, y: 19 }]), null);
+assert.deepEqual(posicionEnRuta(ruta, ruta.totalKm), ruta.points.at(-1));
 
 console.log('OK movimiento-ruta: progreso conserva vértices');

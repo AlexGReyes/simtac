@@ -31,6 +31,7 @@ let mostrarRangos = false;
 
 /** Animaciones en curso: clave -> trayectoria canónica y progreso. */
 const animaciones = new Map();
+const progresoVisual = new Map();
 let rafActivo = false;
 
 /** Interacción de reposicionamiento (solo administrador) y claves en arrastre. */
@@ -510,11 +511,17 @@ export function animarPorTrayecto(item, waypoints, desdeKm, hastaKm, duracion = 
   const feature = capaEntidades.getSource().getFeatureById(item.clave);
   const ruta = prepararRuta(waypoints);
   if (!feature || !ruta || !Number.isFinite(Number(desdeKm)) || !Number.isFinite(Number(hastaKm))) {
-    animarHacia(item, duracion);
+    detenerAnimacion(item);
     return;
   }
-  animaciones.set(item.clave, { ruta, desdeKm: Number(desdeKm), hastaKm: Number(hastaKm),
-    t0: performance.now(), duracion });
+  const ahora = performance.now();
+  const anterior = animaciones.get(item.clave);
+  const inicio = anterior?.ruta
+    ? anterior.desdeKm + (anterior.hastaKm - anterior.desdeKm) *
+      Math.max(0, Math.min(1, (ahora - anterior.t0) / anterior.duracion))
+    : (progresoVisual.get(item.clave) ?? Number(desdeKm));
+  animaciones.set(item.clave, { ruta, desdeKm: Math.min(inicio, Number(hastaKm)), hastaKm: Number(hastaKm),
+    t0: ahora, duracion: Math.max(1, duracion) });
   if (!rafActivo) {
     rafActivo = true;
     requestAnimationFrame(paso);
@@ -535,7 +542,9 @@ function paso(ahora) {
     }
     const t = Math.min(1, (ahora - anim.t0) / anim.duracion);
     if (anim.ruta) {
-      const punto = posicionEnRuta(anim.ruta, anim.desdeKm + (anim.hastaKm - anim.desdeKm) * t);
+      const progreso = anim.desdeKm + (anim.hastaKm - anim.desdeKm) * t;
+      progresoVisual.set(k, progreso);
+      const punto = posicionEnRuta(anim.ruta, progreso);
       if (punto) feature.getGeometry().setCoordinates(xyAMapa(punto));
     } else {
       feature.getGeometry().setCoordinates([
@@ -543,7 +552,10 @@ function paso(ahora) {
         anim.desde[1] + (anim.hasta[1] - anim.desde[1]) * t,
       ]);
     }
-    if (t >= 1) animaciones.delete(k);
+    if (t >= 1) {
+      animaciones.delete(k);
+      anim.alCompletar?.();
+    }
   }
   if (animaciones.size > 0) {
     requestAnimationFrame(paso);
@@ -557,9 +569,11 @@ function paso(ahora) {
 // ---------------------------------------------------------------------------
 
 /** Dibuja los waypoints RESUELTOS POR EL SERVIDOR de un movimiento. */
-export function dibujarTrayecto(tipo, id, waypoints, propia = true, identidad = null) {
-  if (!capaTrayectos || !Array.isArray(waypoints) || waypoints.length < 2) return;
+export function dibujarTrayecto(tipo, id, waypoints, propia = true, identidad = null, segmentos = []) {
+  if (!capaTrayectos || !prepararRuta(waypoints)) return;
   const k = clave(tipo, id);
+  const anterior = capaTrayectos.getSource().getFeatureById(`ruta:${k}`);
+  if (anterior && identidadCoincide(anterior.get('identidadMovimiento'), identidad)) return;
   limpiarTrayecto(tipo, id);
   const feature = new ol.Feature({
     geometry: new ol.geom.LineString(waypoints.map(xyAMapa)),
@@ -567,6 +581,18 @@ export function dibujarTrayecto(tipo, id, waypoints, propia = true, identidad = 
   feature.setId(`ruta:${k}`);
   feature.set('propia', propia);
   feature.set('identidadMovimiento', identidad);
+  feature.set('segmentos', segmentos);
+  if (Array.isArray(segmentos) && segmentos.length) {
+    feature.setStyle(segmentos.filter(segment => Number.isInteger(segment.fromIndex) &&
+      Number.isInteger(segment.toIndex) && segment.fromIndex >= 0 &&
+      segment.toIndex > segment.fromIndex && segment.toIndex < waypoints.length).map(segment =>
+      new ol.style.Style({
+        geometry: new ol.geom.LineString(waypoints.slice(segment.fromIndex, segment.toIndex + 1).map(xyAMapa)),
+        stroke: new ol.style.Stroke({ color: segment.kind === 'vial' ?
+          (propia ? COLORES.verde : COLORES.rojo) : COLORES.ambar,
+          width: segment.kind === 'vial' ? 2 : 3, lineDash: segment.kind === 'vial' ? [6, 6] : [2, 4] }),
+      })));
+  }
   capaTrayectos.getSource().addFeature(feature);
 }
 
@@ -574,19 +600,40 @@ function identidadCoincide(primera, segunda) {
   if (!primera || !segunda) return true;
   return primera.serverEpoch === segunda.serverEpoch &&
     Number(primera.generation) === Number(segunda.generation) &&
+    primera.movementId === segunda.movementId &&
     primera.routeId === segunda.routeId;
+}
+
+export function detenerAnimacion(item) {
+  if (!item) return;
+  animaciones.delete(item.clave);
+  progresoVisual.delete(item.clave);
+  const coordinate = entidadAMapa(item.entidad);
+  const feature = capaEntidades?.getSource().getFeatureById(item.clave);
+  if (coordinate && feature) feature.getGeometry().setCoordinates(coordinate);
+}
+
+export function completarTrayecto(tipo, id, identidad) {
+  const animacion = animaciones.get(clave(tipo, id));
+  if (animacion?.ruta) {
+    animacion.alCompletar = () => limpiarTrayecto(tipo, id, identidad);
+  } else limpiarTrayecto(tipo, id, identidad);
 }
 
 export function limpiarTrayecto(tipo, id, identidad = null) {
   if (!capaTrayectos) return;
   const feature = capaTrayectos.getSource().getFeatureById(`ruta:${clave(tipo, id)}`);
-  if (feature && identidadCoincide(feature.get('identidadMovimiento'), identidad)) {
-    capaTrayectos.getSource().removeFeature(feature);
+  if (!feature || identidadCoincide(feature.get('identidadMovimiento'), identidad)) {
+    if (feature) capaTrayectos.getSource().removeFeature(feature);
+    detenerAnimacion(Store.obtener(tipo, id));
   }
 }
 
 export function limpiarTrayectos() {
   capaTrayectos?.getSource().clear();
+  for (const item of Store.todas()) detenerAnimacion(item);
+  animaciones.clear();
+  progresoVisual.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -1069,8 +1116,8 @@ export function encuadrarTodo() {
 }
 
 export default {
-  init, instancia, renderizarTodo, actualizarEntidad, animarHacia, animarPorTrayecto,
-  dibujarTrayecto, limpiarTrayecto, limpiarTrayectos,
+  init, instancia, renderizarTodo, actualizarEntidad, animarHacia, animarPorTrayecto, detenerAnimacion,
+  dibujarTrayecto, limpiarTrayecto, limpiarTrayectos, completarTrayecto,
   mostrarBase, ocultarBase, mostrarAnillos, ocultarAnillos,
   alternarRangos, rangosVisibles, capaDeDibujo, limpiarDibujo,
   habilitarArrastre, arrastreActivo,

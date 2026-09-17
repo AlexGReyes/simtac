@@ -1,102 +1,126 @@
-// Identidad y orden de los eventos de movimiento.
-//
-// El servidor es autoritativo: el cliente sólo adopta un evento si pertenece a
-// la ejecución vigente de la entidad. Esto evita que un ACK duplicado, un tick
-// retrasado o una ruta de una generación anterior reemplacen lo ya confirmado.
+import { prepararRuta } from './movimiento-ruta.js';
 
-export function claveMovimiento({ entidad_tipo: tipo, entidad_id: id }) {
-  return `${tipo}:${Number(id)}`;
+export function claveMovimiento(evento) {
+  return `${evento.entidad_tipo}:${evento.entidad_id}`;
 }
 
-function numero(value) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
-}
-
-function identidad(evento) {
-  const generation = numero(evento?.generation);
-  const sequence = numero(evento?.sequence);
-  if (!evento?.serverEpoch || generation === null || sequence === null) return null;
-  return {
-    serverEpoch: String(evento.serverEpoch),
-    generation,
-    sequence,
-    routeId: evento.routeId ?? null,
-  };
-}
-
-function comparable(value) {
-  return value ? `${value.serverEpoch}:${value.generation}:${value.routeId ?? ''}` : null;
-}
+const integer = value => Number.isSafeInteger(value) && value >= 0;
+const positive = value => integer(value) && value > 0;
 
 export function mismaRuta(first, second) {
-  return comparable(first) !== null && comparable(first) === comparable(second);
+  return !!first && !!second && first.serverEpoch === second.serverEpoch &&
+    first.generation === second.generation && first.movementId === second.movementId &&
+    first.routeId === second.routeId;
 }
 
 export function crearRegistroMovimientos() {
   let serverEpoch = null;
+  let exercise = null;
+  let watermark = -1;
+  let token = 0;
+  let pending = false;
+  let buffered = [];
   const entries = new Map();
+  const reject = reason => ({ accepted: false, reason });
 
-  function reset(epoch = null) {
-    serverEpoch = epoch;
+  function reset(exerciseId = null) {
+    exercise = exerciseId;
+    serverEpoch = null;
+    watermark = -1;
+    pending = false;
+    buffered = [];
     entries.clear();
+    token += 1;
   }
 
-  function aceptar(evento, estado) {
-    const id = identidad(evento);
-    const key = claveMovimiento(evento || {});
-    if (!key || key.includes('undefined') || key.endsWith(':NaN')) return { accepted: false, reason: 'invalid-entity' };
+  function comenzarSincronizacion(exerciseId) {
+    if (exercise !== exerciseId) reset(exerciseId);
+    pending = true;
+    buffered = [];
+    return ++token;
+  }
 
-    // Compatibilidad transitoria con el backend anterior. No recibe garantías
-    // de orden, pero permite desplegar el cliente antes de actualizar el motor.
-    if (!id) {
-      const prior = entries.get(key);
-      const legacy = { serverEpoch: 'legacy', generation: (prior?.identity?.generation ?? -1) + 1,
-        sequence: 0, routeId: null };
-      const entry = { identity: legacy, state: estado, route: evento.waypoints ?? prior?.route ?? null,
-        progressKm: Number(evento.progreso_km ?? prior?.progressKm ?? 0),
-        entity: { tipo: evento.entidad_tipo, id: Number(evento.entidad_id) } };
-      entries.set(key, entry);
-      return { accepted: true, key, previous: prior ?? null, current: entry, legacy: true };
+  function aceptar(evento, state) {
+    if (!evento || evento.ejercicio_id !== exercise ||
+        !['unidad', 'vehiculo'].includes(evento.entidad_tipo) || !positive(evento.entidad_id) ||
+        typeof evento.serverEpoch !== 'string' || !evento.serverEpoch ||
+        !integer(evento.generation) || !positive(evento.sequence) || !integer(evento.revision)) {
+      return reject('invalid-event');
     }
-
-    if (serverEpoch === null) serverEpoch = id.serverEpoch;
-    if (id.serverEpoch !== serverEpoch) return { accepted: false, reason: 'other-server-epoch' };
-
+    if (pending) {
+      if (buffered.length >= 10000) return reject('buffer-full');
+      buffered.push({ evento, state });
+      return reject('synchronizing');
+    }
+    if (!serverEpoch || evento.serverEpoch !== serverEpoch) return reject('other-server-epoch');
+    if (evento.revision <= watermark) return reject('before-snapshot');
+    const key = claveMovimiento(evento);
     const prior = entries.get(key);
-    if (prior) {
-      if (id.generation < prior.identity.generation ||
-          (id.generation === prior.identity.generation && id.sequence <= prior.identity.sequence)) {
-        return { accepted: false, reason: 'stale-event' };
-      }
+    if (prior && (evento.generation < prior.identity.generation ||
+        (evento.generation === prior.identity.generation &&
+          (evento.sequence <= prior.identity.sequence || prior.state === 'finished' ||
+           !mismaRuta(evento, prior.identity))))) return reject('stale-event');
+    const same = mismaRuta(prior?.identity, evento);
+    const route = evento.waypoints === undefined ? (same ? prior.route : null) : evento.waypoints;
+    const prepared = route ? prepararRuta(route) : null;
+    const progressKm = evento.progreso_km ?? (same ? prior.progressKm : 0);
+    if (typeof progressKm !== 'number' || !Number.isFinite(progressKm) || progressKm < 0 ||
+        (same && progressKm < prior.progressKm) ||
+        (state === 'active' && (!prepared || typeof evento.routeId !== 'string' || !evento.routeId ||
+          typeof evento.movementId !== 'string' || !evento.movementId || progressKm > prepared.totalKm + 1e-6))) {
+      return reject('invalid-route-progress');
     }
     const entry = {
-      identity: id,
-      state: estado,
-      route: evento.waypoints ?? prior?.route ?? null,
-      progressKm: Number(evento.progreso_km ?? prior?.progressKm ?? 0),
-      entity: { tipo: evento.entidad_tipo, id: Number(evento.entidad_id) },
+      identity: { serverEpoch, generation: evento.generation, movementId: evento.movementId,
+        commandId: evento.commandId, routeId: evento.routeId, sequence: evento.sequence, revision: evento.revision },
+      state, route: prepared?.points || null, progressKm,
+      segments: evento.segmentos ?? (same ? prior.segments : []),
+      entity: { tipo: evento.entidad_tipo, id: evento.entidad_id }, evento,
     };
     entries.set(key, entry);
-    return { accepted: true, key, previous: prior ?? null, current: entry, legacy: false };
+    return { accepted: true, key, previous: prior || null, current: entry };
   }
 
-  function inicio(evento) { return aceptar(evento, 'active'); }
-  function posicion(evento) { return aceptar(evento, 'active'); }
-  function final(evento) { return aceptar(evento, 'finished'); }
-
-  function snapshot(snapshot = {}) {
-    const epoch = snapshot.serverEpoch ? String(snapshot.serverEpoch) : null;
-    if (!epoch) return { accepted: false, reason: 'snapshot-without-epoch', removed: [] };
-    const removed = [...entries.entries()].filter(([, entry]) => entry.state === 'active').map(([key, entry]) => ({ key, entry }));
-    reset(epoch);
-    const accepted = [];
-    for (const movement of snapshot.movimientos || []) {
-      const result = inicio(movement);
-      if (result.accepted) accepted.push(result);
+  function snapshot(value, requestToken = token) {
+    if (!pending || requestToken !== token || value?.ejercicio_id !== exercise ||
+        typeof value.serverEpoch !== 'string' || !value.serverEpoch ||
+        !integer(value.revision) || !Array.isArray(value.movimientos)) return reject('unexpected-snapshot');
+    if (value.serverEpoch === serverEpoch && value.revision < watermark) return reject('stale-snapshot');
+    const removed = [...entries.entries()].map(([key, entry]) => ({ key, entry }));
+    const previous = new Map(entries);
+    const previousEpoch = serverEpoch;
+    const previousWatermark = watermark;
+    const queued = buffered;
+    serverEpoch = value.serverEpoch;
+    watermark = -1;
+    entries.clear();
+    pending = false;
+    buffered = [];
+    const movements = [];
+    for (const event of value.movimientos) {
+      if (event.revision > value.revision || entries.has(claveMovimiento(event))) { pending = true; break; }
+      const result = aceptar(event, 'active');
+      if (!result.accepted) { pending = true; break; }
+      movements.push(result);
     }
-    return { accepted: true, removed, movements: accepted };
+    if (pending) {
+      serverEpoch = previousEpoch;
+      watermark = previousWatermark;
+      entries.clear();
+      previous.forEach((entry, key) => entries.set(key, entry));
+      buffered = queued;
+      return reject('invalid-snapshot');
+    }
+    watermark = value.revision;
+    const replay = [];
+    for (const { evento, state } of queued.sort((first, second) => first.evento.revision - second.evento.revision)) {
+      const result = aceptar(evento, state);
+      if (result.accepted) replay.push(result);
+    }
+    return { accepted: true, removed, movements, replay };
   }
 
-  return { final, inicio, mismaRuta, posicion, reset, snapshot };
+  return { inicio: event => aceptar(event, 'active'), posicion: event => aceptar(event, 'active'),
+    final: event => aceptar(event, 'finished'), comenzarSincronizacion, snapshot, reset,
+    activos: () => [...entries.values()].filter(entry => entry.state === 'active') };
 }
