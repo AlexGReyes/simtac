@@ -50,6 +50,11 @@ El cliente web ejecuta estos mismos módulos y OpenLayers. Rust 1.98.1 y Cargo
 binario se probó arrancando y cerrando de forma controlada. El bundle local no
 está firmado ni notarizado y no constituye todavía un instalador distribuible.
 
+Para acceder desde otra computadora en la red local, abrir
+`http://10.40.0.21:8082`. El cliente usa `http://10.40.0.21` para el backend y
+`http://10.40.0.21:3001/geoserver` para la cartografía. Si la IP cambia por DHCP,
+actualizar `src/config.json` y el `config.json` servido por el contenedor cliente.
+
 ## Caso del operador y alcance
 
 Toreo aproximado `(-99.219119444, 19.454719444)` hacia Plaza de los Mártires

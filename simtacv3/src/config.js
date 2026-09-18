@@ -22,8 +22,8 @@
 
 /** Valores de último recurso: el despliegue original, todo en la misma máquina. */
 export const DEFECTOS = {
-  backend: 'http://node.localhost',
-  geoserver: 'http://localhost:3001/geoserver',
+  backend: 'http://10.40.0.21',
+  geoserver: 'http://10.40.0.21:3001/geoserver',
 };
 
 /** Claves que este módulo conoce. Cualquier otra en el JSON se ignora. */

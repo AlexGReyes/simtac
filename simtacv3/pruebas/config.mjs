@@ -70,7 +70,7 @@ await corre('valor invalido degrada al siguiente nivel',
 
 await corre('sin config.json quedan los valores por defecto',
   { despliegue: false },
-  { geoserver: 'http://localhost:3001/geoserver', backend: 'http://node.localhost',
+  { geoserver: 'http://10.40.0.21:3001/geoserver', backend: 'http://10.40.0.21',
     origenGeo: 'valor por defecto' });
 
 console.warn = warn;
