@@ -1320,11 +1320,14 @@ class AdminManager {
           ...(data.grado ? { grado: data.grado } : {}),
         };
       } else if (table === 'unidades') {
-        // `jugador_asignado_id` no es una columna de `unidad_militar`: la
-        // relación vive en `unidad_militar_usuario`, así que se saca del cuerpo
-        // y se manda como una segunda llamada apenas exista el id.
+        // `jugador_asignado_id` no es una columna de `unidad_militar`: se
+        // transforma al nombre que espera POST /unidades para que la unidad
+        // nazca con controlador dentro de la misma transacción.
         jugadorDeLaUnidad = data.jugador_asignado_id ?? null;
         delete data.jugador_asignado_id;
+        if (jugadorDeLaUnidad !== null && jugadorDeLaUnidad !== '') {
+          data.usuarioId = Number(jugadorDeLaUnidad);
+        }
       } else if (table === 'participantes') {
         const ejercicioId = data.ejercicio_id;
         endpoint = `/ejercicios/${ejercicioId}/participantes`;
@@ -1380,26 +1383,6 @@ class AdminManager {
         });
         if (!promocion.ok) {
           throw new Error('El usuario se creó como jugador, pero no se pudo promoverlo a administrador.');
-        }
-      }
-
-      // Una unidad siempre tiene un jugador: se asigna en el acto. Sin esto la
-      // unidad no queda en ningún ejercicio y no hay de dónde sacarle el bando.
-      if (jugadorDeLaUnidad) {
-        const asignacion = await fetch(`${API_BASE}/unidades/${creado.id}/usuarios`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ usuarioId: Number(jugadorDeLaUnidad) }),
-        });
-        if (!asignacion.ok) {
-          const detalle = await asignacion.json().catch(() => ({}));
-          throw new Error(
-            `La unidad "${creado.nombre || creado.id}" se creó, pero no se le pudo asignar el jugador: `
-            + `${detalle.error || `error ${asignacion.status}`}. Asignáselo desde «Usuarios → Unidades».`,
-          );
         }
       }
 
