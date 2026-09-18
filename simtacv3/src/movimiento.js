@@ -148,7 +148,7 @@ export async function enviarMovimiento(item, destino) {
       commandId: commandId(),
       // `posicion_inicio` es opcional: omitirlo usa la posición actual.
       posicion_fin: destino,
-    }, { timeoutMs: 95000 });
+    }, { timeoutMs: 130000 });
     // ACK y evento llevan la misma identidad: adoptar ambos es seguro y no
     // crea una segunda capa ni reemplaza una orden posterior.
     adoptarInicio(respuesta);
