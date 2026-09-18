@@ -37,25 +37,30 @@ sh tools/routing/test_browser.sh
 El script inicia un servidor desechable con los handlers reales de movimiento y
 estado temporal; sólo el arnés de pruebas proporciona identidades sintéticas.
 No desactiva la autenticación del backend desplegado. Dos usuarios/visores reciben
-la ruta real Toreo–Toluca a 80 km/h. Se verifican geometría, distancia, curvas por
-frame, llegada, cancelación, reconexión y rechazo de accesos desconocidos. Una
+la ruta integral real Toreo–Toluca a 80 km/h. Se verifican accesos tipados,
+geometría, distancia, curvas por frame, llegada, cancelación, reconexión y rechazo
+de un destino sobre agua. Una
 segunda prueba abre el login de la aplicación desplegada y comprueba la API.
 
 Evidencia local: `test-results/toreo-toluca.png`. La suite exige el cliente web
 local en `http://127.0.0.1:8082`; `SIMTAC_BROWSER_URL` selecciona el arnés aislado.
-El cliente web ejecuta estos mismos módulos y OpenLayers. No se ha compilado ni
-certificado un instalador Tauri nativo en esta máquina (no tiene Rust/Cargo).
+El cliente web ejecuta estos mismos módulos y OpenLayers. Rust 1.98.1 y Cargo
+1.98.1 están instalados mediante rustup. `npm run tauri -- build --bundles app
+--no-sign --ci` genera `src-tauri/target/release/bundle/macos/simtacv3.app`; el
+binario se probó arrancando y cerrando de forma controlada. El bundle local no
+está firmado ni notarizado y no constituye todavía un instalador distribuible.
 
 ## Caso del operador y alcance
 
 Toreo aproximado `(-99.219119444, 19.454719444)` hacia Plaza de los Mártires
-`(-99.65691, 19.292551)`, batallón de infantería a 80 km/h. La porción vial mide
-63.1489 km en el modelo esférico del motor, con 695 vértices. La prueba completa
-de esa porción usa reloj simulado; las ventanas del navegador usan tiempo real.
+`(-99.65691, 19.292551)`, batallón de infantería a 80 km/h. El planificador evalúa
+tres enganches por extremo, conserva hasta dos transitables y compara hasta cuatro
+combinaciones viales. La ruta seleccionada mide 61.3699 km: 0.3205 km de acceso
+inicial, 58.3438 km viales y 2.7056 km de acceso final, con 809 vértices.
 
-Los puntos pedidos requieren accesos de aproximadamente 197 m y 1.84 km.
-El acceso inicial no cuenta con evidencia suficiente bajo las reglas actuales;
-por ello la orden completa se rechaza sin mover la unidad. No confundir la prueba
-vial aceptada entre nodos con un viaje completo aprobado desde esos puntos.
+Ambos accesos atraviesan clase 216 `Poblado` bajo la política
+`simulacion-2026-09-17-2`; el movimiento integral terminó en 2,762 ticks simulados
+sin saltos superiores a 80 km/h. Un destino real sobre clase 214
+`Cuerpos de agua` se conserva como prueba de rechazo sin movimiento.
 Las reglas son de simulación con cartografía estática, no una certificación de
 transitabilidad física actual.

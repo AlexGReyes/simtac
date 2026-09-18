@@ -420,13 +420,12 @@ function valorViewParam(valor) {
 }
 
 /**
- * Ruta vehicular por la vista SQL parametrizada (pgRouting). Coordenadas a 6
- * decimales: más precisión que eso la rechaza el `regexpValidator` de la vista
- * con HTTP 400.
+ * Ruta vehicular por la vista SQL parametrizada (pgRouting). Coordenadas a 12
+ * decimales, dentro del máximo de 15 aceptado por la vista desplegada.
  *
  * La respuesta es un `FeatureCollection` con **0 o 1** features; la geometría
- * es `MultiLineString` (no `LineString`): hay que recorrer todas sus partes, no
- * asumir `coordinates[0]`, y el sentido de la línea no está garantizado.
+ * conserva compatibilidad `MultiLineString`; `properties.recorrido_geojson`
+ * contiene el `LineString` ordenado y orientado que debe usarse para movimiento.
  * `properties.length_m` es la longitud real sobre la red vial — usala como
  * distancia en vez de un haversine sobre los vértices; no viene duración.
  *
@@ -439,7 +438,7 @@ function valorViewParam(valor) {
  * entendible en vez de dejar salir el error crudo de Postgres.
  */
 export async function calcularRuta(origen, destino, { timeoutMs = 60000 } = {}) {
-  const red = (n) => Number(n).toFixed(6);
+  const red = (n) => Number(n).toFixed(12);
   const viewparams = [
     `origen_lon:${valorViewParam(red(origen.x))}`,
     `origen_lat:${valorViewParam(red(origen.y))}`,
@@ -461,9 +460,8 @@ export async function calcularRuta(origen, destino, { timeoutMs = 60000 } = {}) 
   } catch (error) {
     if (String(error.message).includes('400')) {
       throw new Error(
-        'GeoServer rechazó la ruta (HTTP 400). Si el servidor no tiene aplicada la migración ' +
-          '006 de la caché de rutas, repetir coordenadas exactas falla: desplazá el origen o el ' +
-          'destino unos metros.',
+        'GeoServer rechazó la ruta (HTTP 400). Verificá que estén aplicadas las migraciones ' +
+          '006 a 009 y que las coordenadas sean válidas; no alteres los puntos para forzarla.',
       );
     }
     throw error;

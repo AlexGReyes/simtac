@@ -1,8 +1,8 @@
 {
   "_meta": {
     "descripcion": "Configuración de despliegue del SIMTAC GeoServer para procesos servidor a servidor (backend Node). Respuesta a PEDIDO_CONFIG_GEOSERVER.md. Este archivo se mantiene en este repositorio; el backend lo lee o lo copia, no lo edita.",
-    "version": 1,
-    "actualizado": "2026-09-10T00:00:00Z",
+    "version": 2,
+    "actualizado": "2026-09-18T00:00:00Z",
     "referencias": [
       "INTEGRACION_RED_LOCAL_MAC.md",
       "INTEGRACION_SIMTAC_GEOSERVER.md",
@@ -11,17 +11,17 @@
   },
 
   "geoserver": {
-    "baseUrl": "http://172.200.1.17:3001/geoserver",
-    "baseUrlAlt": "http://10.40.0.24:3001/geoserver",
+    "baseUrl": "http://geoserver:8080/geoserver",
+    "baseUrlAlt": "http://172.200.1.17:3001/geoserver",
     "dnsLan": null,
     "notas": {
-      "baseUrl": "Ethernet en0, IP fija/manual. Es la que debe usar el backend.",
-      "baseUrlAlt": "Wi-Fi en1, DHCP: el lease puede cambiar de dueño. Solo respaldo.",
+      "baseUrl": "Alias interno estable para el backend integrado en la red Docker.",
+      "baseUrlAlt": "Ethernet en0, IP fija/manual. Solo respaldo fuera de Docker.",
       "dnsLan": "Cuando el Mac tenga nombre fijo en la LAN se pone aquí y el backend debe preferirlo sobre las IPs.",
       "localhost": "http://localhost:3001/geoserver solo funciona en el propio Mac."
     },
     "healthCheck": {
-      "path": "/simtac_general/wms?service=WMS&version=1.1.1&request=GetCapabilities",
+      "path": "/wms?service=WMS&version=1.1.1&request=GetCapabilities",
       "metodo": "GET",
       "statusEsperado": 200,
       "cuerpoContiene": "WMT_MS_Capabilities",
@@ -51,9 +51,9 @@
     "viewparams": {
       "formato": "clave:valor;clave:valor",
       "claves": ["origen_lon", "origen_lat", "destino_lon", "destino_lat"],
-      "decimales": 6,
+      "decimales": 12,
       "reglas": [
-        "Redondear a 6 decimales exactos: más precisión devuelve HTTP 400.",
+        "Enviar 12 decimales exactos; la vista acepta hasta 15.",
         "Ningún valor puede contener ':' ni ';' — validar y rechazar por valor antes de componer la cadena; encodeURIComponent sobre el todo no alcanza."
       ]
     },
@@ -63,17 +63,22 @@
       "crs": "urn:ogc:def:crs:EPSG::4326",
       "features": "1 cuando hay ruta; 0 (FeatureCollection vacío, HTTP 200) cuando no se pudo trazar.",
       "geometria": {
-        "tipo": "MultiLineString",
+        "tipoCompatibilidad": "MultiLineString",
+        "propiedadOrdenada": "recorrido_geojson",
+        "tipoOrdenado": "LineString",
         "ordenCoordenadas": "[lon, lat]",
         "advertencias": [
-          "No es LineString: coordinates es [[[lon,lat],...],...]. Iterar todas las partes, no asumir coordinates[0].",
-          "El sentido de la línea no está garantizado (puede venir destino -> origen). Comparar extremos contra lo pedido e invertir si hace falta."
+          "Usar recorrido_geojson para movimiento: conserva secuencia y orientación pgRouting.",
+          "La geometría MultiLineString principal existe sólo por compatibilidad con consumidores anteriores."
         ]
       },
       "properties": {
         "id": "Siempre 1, no significativo.",
         "length_m": "Longitud real sobre la red vial, en metros. Usarla como distancia: más precisa que un haversine sobre los vértices.",
-        "n_segmentos": "Número de tramos de calle."
+        "n_segmentos": "Número de tramos de calle.",
+        "snap_origen_m": "Distancia del punto solicitado al enganche vial, en metros.",
+        "snap_destino_m": "Distancia del destino solicitado al enganche vial, en metros.",
+        "recorrido_geojson": "LineString JSON ordenado y orientado según el recorrido."
       },
       "sinDuracion": "pgRouting devuelve solo distancia y conteo de segmentos. El tiempo/velocidad lo calcula el backend sobre length_m.",
       "ejemploProperties": { "id": 1, "length_m": 64895.84, "n_segmentos": 59 }

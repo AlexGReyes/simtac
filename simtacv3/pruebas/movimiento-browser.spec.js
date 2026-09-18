@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const baseUrl = process.env.SIMTAC_BROWSER_URL || 'http://127.0.0.1:3102';
 
-test('dos visores: ruta real a 80 km/h, curvas, cancelación, reconexión y acceso bloqueado', async ({ browser }) => {
+test('dos visores: ruta integral real a 80 km/h, curvas, reconexión y agua bloqueada', async ({ browser }) => {
   test.setTimeout(120000);
   const context = await browser.newContext();
   const pages = await Promise.all([context.newPage(), context.newPage()]);
@@ -14,14 +14,16 @@ test('dos visores: ruta real a 80 km/h, curvas, cancelación, reconexión y acce
   }
   const [first, second] = pages;
   const fixture = await first.evaluate(() => fetch('/test-case').then(response => response.json()));
-  await first.evaluate(() => harness.Socket.emitir('test:reset', {}));
+  await first.evaluate(() => harness.Socket.emitir('test:reset', { landmark: true }));
   for (const page of pages) await expect.poll(() => page.evaluate(() => {
     const entity = harness.Store.obtener('unidad', 1).entidad;
     return { x: entity.posicion_x, y: entity.posicion_y };
-  })).toEqual(fixture.road[0]);
+  })).toEqual(fixture.origin);
   const order = await first.evaluate(destination => harness.Movimiento.enviarMovimiento(
-    harness.Store.obtener('unidad', 1), destination), fixture.road.at(-1));
+    harness.Store.obtener('unidad', 1), destination), fixture.destination);
   expect(order?.routeId).toBeTruthy();
+  expect(order.segmentos.map(segment => segment.kind)).toEqual(
+    ['acceso_origen', 'vial', 'acceso_destino']);
   for (const page of pages) {
     await expect.poll(() => page.evaluate(() => harness.routes().length)).toBe(1);
     const geometry = await page.evaluate(() => harness.routes()[0].getGeometry().getCoordinates());
@@ -77,7 +79,7 @@ test('dos visores: ruta real a 80 km/h, curvas, cancelación, reconexión y acce
     try { await harness.Socket.emitir('entidad:mover', { ejercicio_id: 1, entidad_tipo: 'unidad', entidad_id: 1,
       posicion_fin: destination }, { timeoutMs: 90000 }); return 'UNEXPECTED_MOVEMENT'; }
     catch (error) { return error.code; }
-  }, fixture.destination);
+  }, fixture.blockedDestination);
   expect(['ROUTE_NOT_TRAVERSABLE', 'TRAVERSABILITY_UNKNOWN']).toContain(rejected);
   for (const page of pages) {
     expect(await page.evaluate(() => harness.routes().length)).toBe(0);

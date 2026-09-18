@@ -50,12 +50,13 @@ for (const [clave, valor] of Object.entries({
 })) {
   comprueba(`parametrosFijos.${clave} = ${valor}`, rv.parametrosFijos?.[clave] === valor);
 }
-comprueba('viewparams son las 4 coordenadas a 6 decimales',
-  rv.viewparams?.decimales === 6 &&
+comprueba('viewparams son las 4 coordenadas a 12 decimales',
+  rv.viewparams?.decimales === 12 &&
   ['origen_lon', 'origen_lat', 'destino_lon', 'destino_lat']
     .every((k) => rv.viewparams?.claves?.includes(k)));
-comprueba('la respuesta se documenta como MultiLineString',
-  rv.respuesta?.geometria?.tipo === 'MultiLineString');
+comprueba('la respuesta documenta el recorrido ordenado v2',
+  rv.respuesta?.geometria?.tipoCompatibilidad === 'MultiLineString' &&
+  rv.respuesta?.geometria?.propiedadOrdenada === 'recorrido_geojson');
 comprueba('concurrenciaRecomendada <= concurrenciaMax',
   rv.throughput?.concurrenciaRecomendada > 0 &&
   rv.throughput.concurrenciaRecomendada <= rv.throughput.concurrenciaMax);
