@@ -932,7 +932,7 @@ function vigilarTeselas(capas) {
         }
       })();
       toast(
-        `Sin cartografía: ${host} no responde. Revisá la dirección en el panel 🗺 de la barra del mapa.`,
+        `Sin cartografía: ${host} no responde. Revisá la dirección en Administración → Conexiones.`,
         'error',
         8000,
       );
@@ -1095,23 +1095,78 @@ export function reapuntarGeoserver(url) {
 // Vista
 // ---------------------------------------------------------------------------
 
+/**
+ * ¿Se puede animar la vista hasta `zoomDestino`?
+ *
+ * Solo si el destino cae en el MISMO layergroup base que la vista actual.
+ * Durante una animación OL precarga las teselas de la vista final con la capa
+ * visible ahora (`enqueueTilesForNextExtent`), y cada capa tiene el tile grid
+ * acotado a su banda (`gridWmts`): si el destino está fuera, OL no puede bajar
+ * de nivel y cubre la extensión final con teselas del nivel mínimo de la capa.
+ * Ir de z12 (contexto, grid desde z11) a z3 sobre medio planeta son cientos de
+ * miles de teselas creadas en un solo frame: la app quedaba congelada ~20 s al
+ * entrar al ejercicio. Saltando sin animación ese frame nunca existe.
+ */
+function puedeAnimarHasta(zoomDestino) {
+  const actual = Geoserver.grupoParaZoom(mapa.getView().getZoom()).nombre;
+  return Geoserver.grupoParaZoom(zoomDestino).nombre === actual;
+}
+
 export function centrarEn(entidad, zoom) {
   if (!mapa || !entidad) return;
   const coord = entidadAMapa(entidad);
   if (!coord) return;
   const vista = mapa.getView();
-  vista.animate({ center: coord, duration: 400, zoom: zoom ?? vista.getZoom() });
+  const destino = zoom ?? vista.getZoom();
+  if (puedeAnimarHasta(destino)) {
+    vista.animate({ center: coord, duration: 400, zoom: destino });
+  } else {
+    vista.setCenter(coord);
+    vista.setZoom(destino);
+  }
+}
+
+/**
+ * Una entidad exactamente en 0,0 ("Null Island", en el golfo de Guinea) es una
+ * entidad sin posición cargada: el backend guarda 0 cuando no se la dio. Se
+ * sigue dibujando, pero no entra en el encuadre — si no, arrastra la vista
+ * desde el teatro de operaciones hasta el otro lado del Atlántico.
+ */
+function sinPosicionReal(feature) {
+  const [x, y] = mapaALonLat(feature.getGeometry().getCoordinates());
+  return x === 0 && y === 0;
 }
 
 /** Encaja la vista sobre todas las entidades visibles. */
 export function encuadrarTodo() {
   if (!mapa || !capaEntidades) return;
-  const fuente = capaEntidades.getSource();
-  if (fuente.getFeatures().length === 0) return;
-  mapa.getView().fit(fuente.getExtent(), {
-    padding: [80, 80, 80, 380],
-    maxZoom: 14,
-    duration: 500,
+  const features = capaEntidades.getSource().getFeatures();
+  const ubicadas = features.filter((f) => !sinPosicionReal(f));
+  const descartadas = features.length - ubicadas.length;
+  if (descartadas) {
+    console.warn(`[mapa] ${descartadas} entidad(es) en 0,0 (sin posición cargada) quedan fuera del encuadre:`,
+      features.filter(sinPosicionReal).map((f) => f.getId()));
+  }
+  if (ubicadas.length === 0) return;
+
+  const extension = ol.extent.createEmpty();
+  for (const f of ubicadas) ol.extent.extend(extension, f.getGeometry().getExtent());
+
+  const padding = [80, 80, 80, 380];
+  const maxZoom = 14;
+  const vista = mapa.getView();
+  const [ancho, alto] = mapa.getSize();
+  const resolucion = vista.getResolutionForExtent(extension, [
+    Math.max(1, ancho - padding[1] - padding[3]),
+    Math.max(1, alto - padding[0] - padding[2]),
+  ]);
+  // `constrainResolution` encaja hacia afuera: el nivel entero de abajo.
+  const zoomDestino = Math.min(maxZoom, Math.floor(vista.getZoomForResolution(resolucion)));
+
+  vista.fit(extension, {
+    padding,
+    maxZoom,
+    duration: puedeAnimarHasta(zoomDestino) ? 500 : 0,
   });
 }
 

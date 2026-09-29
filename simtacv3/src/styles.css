@@ -170,6 +170,46 @@ body {
   box-shadow: 0 0 8px rgba(var(--sim-oro-rgb), 0.15);
 }
 
+/* Botón "ver contraseña": muestra el texto solo mientras se mantiene pulsado */
+.password-wrap {
+  position: relative;
+  display: flex;
+}
+
+.password-wrap input {
+  flex: 1;
+  padding-right: 42px;
+}
+
+.password-peek {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(var(--sim-blanco-rgb), 0.85);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.password-peek:hover,
+.password-peek:focus-visible,
+.password-peek.activo {
+  color: var(--sim-blanco);
+}
+
+.password-peek:focus-visible {
+  outline: 1px solid rgba(var(--sim-blanco-rgb), 0.6);
+  outline-offset: -4px;
+  border-radius: 4px;
+}
+
 .login-btn {
   padding: 12px 16px;
   background: linear-gradient(135deg, var(--sim-oro) 0%, var(--sim-oro-oscuro) 100%);
@@ -198,6 +238,107 @@ body {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Enlace "⚙ Servidor" del login: cambiar el backend sin haber entrado */
+.login-servidor {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(var(--sim-oro-rgb), 0.15);
+  text-align: center;
+}
+
+.login-servidor-link {
+  background: none;
+  border: none;
+  padding: 2px 4px;
+  color: rgba(var(--sim-texto-rgb), 0.6);
+  font-size: 11px;
+  font-family: inherit;
+  cursor: pointer;
+  word-break: break-all;
+}
+
+.login-servidor-link:hover,
+.login-servidor-link:focus-visible,
+.login-servidor-link[aria-expanded="true"] {
+  color: var(--sim-blanco);
+  text-decoration: underline;
+}
+
+.login-servidor-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  text-align: left;
+}
+
+.login-servidor-form[hidden] {
+  display: none;
+}
+
+.login-servidor-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--sim-oro);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.login-servidor-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.login-servidor-fila input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  background: rgba(var(--sim-negro-rgb), 0.3);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.25);
+  color: var(--sim-texto);
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+}
+
+.login-servidor-fila input:focus {
+  border-color: rgba(var(--sim-oro-rgb), 0.5);
+}
+
+.login-servidor-btn {
+  padding: 8px 14px;
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  border: 1px solid rgba(var(--sim-oro-rgb), 0.4);
+  color: var(--sim-oro);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.login-servidor-btn:hover:not(:disabled) {
+  background: rgba(var(--sim-oro-rgb), 0.35);
+}
+
+.login-servidor-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.login-servidor-estado {
+  margin: 0;
+  min-height: 16px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: rgba(var(--sim-texto-rgb), 0.7);
+  word-break: break-word;
+}
+
+.login-servidor-estado.ok { color: var(--sim-verde); }
+.login-servidor-estado.error { color: var(--sim-rojo); }
 
 .login-error {
   font-size: 12px;
@@ -1813,6 +1954,45 @@ button {
   text-transform: uppercase;
   transition: all 0.2s ease;
 }
+
+/* Administración → Conexiones (conexiones.js) */
+.conexiones {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+  padding: 20px 16px;
+  overflow-y: auto;
+}
+
+.conexiones-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.conexiones-fila input {
+  flex: 1;
+  min-width: 0;
+}
+
+.conexiones-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.conexiones-nota,
+.conexiones-estado {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.conexiones-nota { color: rgba(var(--sim-texto-rgb), 0.55); }
+.conexiones-estado { color: rgba(var(--sim-texto-rgb), 0.75); }
+.conexiones-estado.ok { color: var(--sim-verde); }
+.conexiones-estado.error { color: var(--sim-rojo); }
 
 .admin-new-btn:hover {
   background: linear-gradient(135deg, rgba(var(--sim-oro-rgb), 0.4) 0%, rgba(var(--sim-cian-rgb), 0.25) 100%);

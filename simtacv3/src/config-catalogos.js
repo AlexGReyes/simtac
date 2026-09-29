@@ -1240,16 +1240,6 @@ export function init() {
     if (contextoElegidoManualmente || !ejercicioId) return;
     ejercicioFiltro = String(ejercicioId);
   });
-
-  // Atajo desde la cabecera: abre la administración en la pestaña de armamento.
-  const boton = document.getElementById('catalogos-btn');
-  if (!boton) return;
-  boton.style.display = 'flex';
-  boton.addEventListener('click', async () => {
-    modalAdmin()?.classList.add('active');
-    await window.adminManager?.init();
-    window.adminManager?.switchTable('armamento');
-  });
 }
 
 export default {

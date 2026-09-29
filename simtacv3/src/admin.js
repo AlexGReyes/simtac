@@ -4,6 +4,7 @@ import * as Sidc from './sidc.js';
 import Catalogos from './config-catalogos.js';
 import Store from './store.js';
 import Socket from './socket.js';
+import Conexiones from './conexiones.js';
 // Enlace vivo: `api.js` la reapunta cuando se resuelve la configuración, así
 // que no puede copiarse a una constante local.
 import { API_BASE } from './api.js';
@@ -100,6 +101,7 @@ class AdminManager {
       'unidades-base': 'Crea y mantiene las plantillas de unidades militares con sus códigos SIDC. Estas plantillas se utilizan como base para crear instancias de unidades en los ejercicios.',
       unidades: 'Administra las instancias de unidades militares que participan en los ejercicios. Puedes crear nuevas unidades basadas en las plantillas disponibles y establecer sus posiciones en el mapa. Con un ejercicio elegido arriba solo se listan las suyas: las que controla alguno de sus participantes.',
       ejercicios: 'Crea y gestiona sesiones de simulación. Cada ejercicio es una sesión independiente donde se pueden asignar unidades militares y ejecutar operaciones tácticas.',
+      conexiones: 'Direcciones del backend (simulación) y del GeoServer (cartografía) de esta instalación. Se guardan en el config.json editable del directorio de la app, que tiene prioridad sobre el config del despliegue.',
       asignaciones: 'Asigna usuarios a unidades militares. Define quién controla cada unidad en los ejercicios, estableciendo la relación entre usuarios y unidades. Es lo que mete una unidad en un ejercicio: con un ejercicio elegido arriba solo se listan las asignaciones de sus participantes.',
       participantes: 'Asigna usuarios no-administradores a ejercicios con un bando específico (azul, rojo, etc.). Un usuario solo puede participar una vez en cada ejercicio, pero puede cambiar de bando.',
       armamento: 'Define los sistemas de armas: cadencia de disparo, daño a unidades y a vehículos, alcance y tipo de ataque. Después se montan sobre las plantillas de vehículo.',
@@ -254,6 +256,9 @@ class AdminManager {
         break;
       case 'participantes':
         await this.loadParticipantes();
+        break;
+      case 'conexiones':
+        Conexiones.mostrar();
         break;
       default:
         // Armamento y vehículos viven en config-catalogos.js.

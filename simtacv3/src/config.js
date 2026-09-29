@@ -11,8 +11,8 @@
 //   2. `config.json` del directorio de configuración de la app
 //      (`%APPDATA%/com.agrey.simtacv3/`, el mismo de `sesion.json`). Es el
 //      único editable en una máquina YA instalada, porque el `config.json` de
-//      abajo viaja dentro del binario en un build de release. Lo escribe el
-//      panel de capas y se puede editar con un bloc de notas.
+//      abajo viaja dentro del binario en un build de release. Lo escribe
+//      Administración → Conexiones (`conexiones.js`) y se puede editar con un bloc de notas.
 //   3. `src/config.json` — el config del despliegue, que viaja con la app.
 //   4. Los valores de `DEFECTOS`, último recurso.
 //

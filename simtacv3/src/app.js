@@ -162,8 +162,9 @@ function inicializarBarraMapa() {
 // Panel de cartografía (GeoServer)
 //
 // La base WMTS se elige sola según el zoom (`geoserver.js`): acá va lo que
-// decide el usuario — a qué servidor apuntar, si prender el satélite y qué
-// capas temáticas WMS superponer. Nada de esto llama a `/geoserver/rest/...`,
+// decide el usuario — si prender el satélite y qué capas temáticas WMS
+// superponer. A qué servidor apuntar se decide en Administración → Conexiones
+// (`conexiones.js`). Nada de esto llama a `/geoserver/rest/...`,
 // que es administrativo y necesita credenciales.
 // ---------------------------------------------------------------------------
 
@@ -172,37 +173,9 @@ function inicializarPanelCartografia() {
   const boton = document.getElementById('mapa-capas');
   if (!panel || !boton) return;
 
-  const estado = document.getElementById('capas-estado');
-  const inputUrl = document.getElementById('capas-url');
   const checkSatelite = document.getElementById('capas-satelite');
   const estadoSatelite = document.getElementById('capas-satelite-estado');
   const grupoEl = document.getElementById('capas-grupo');
-  const origenEl = document.getElementById('capas-origen');
-  const inputBackend = document.getElementById('capas-backend');
-  const origenBackendEl = document.getElementById('capas-backend-origen');
-  const archivoEl = document.getElementById('capas-archivo');
-
-  const pintarEstado = (texto, clase = '') => {
-    if (!estado) return;
-    estado.textContent = texto;
-    estado.className = `capas-estado ${clase}`;
-  };
-
-  // El panel dice de dónde salió la URL y qué archivo hay que editar para
-  // cambiarla sin pasar por acá: es la pregunta que se hace el operador.
-  const pintarOrigen = () => {
-    if (inputUrl) inputUrl.value = Config.geoserver();
-    if (origenEl) origenEl.textContent = `Origen: ${Config.origen('geoserver')}`;
-    if (inputBackend) inputBackend.value = Config.backend();
-    if (origenBackendEl) origenBackendEl.textContent = `Origen: ${Config.origen('backend')}`;
-    if (archivoEl) {
-      const ruta = Config.rutaConfigUsuario();
-      archivoEl.textContent = ruta
-        ? `Archivo editable: ${ruta}`
-        : 'Sin archivo de configuración (fuera de Tauri se guarda en el navegador).';
-    }
-  };
-  pintarOrigen();
 
   boton.addEventListener('click', () => {
     const abierto = panel.classList.toggle('activo');
@@ -225,58 +198,11 @@ function inicializarPanelCartografia() {
   Mapa.instancia()?.getView().on('change:resolution', pintarGrupoActivo);
   pintarGrupoActivo();
 
-  // --- Servidor ---------------------------------------------------------
-  document.getElementById('capas-url-aplicar')?.addEventListener('click', () => {
-    try {
-      const url = Mapa.reapuntarGeoserver(inputUrl.value);
-      pintarOrigen();
-      pintarEstado(`Apuntando a ${url}`, 'ok');
-      verificarSatelite();
-    } catch (error) {
-      pintarEstado(error.message, 'error');
-    }
-  });
-
-  // Vuelve a lo que diga el `config.json` del despliegue, descartando lo que se
-  // haya escrito acá antes.
-  document.getElementById('capas-url-restablecer')?.addEventListener('click', async () => {
-    await Config.restablecer();
-    Mapa.reapuntarGeoserver(Config.geoserver());
-    pintarOrigen();
-    pintarEstado(
-      `Restablecido desde el config del despliegue. El backend (${Config.backend()}) se aplica al reiniciar.`,
-      'ok',
-    );
+  // La URL del GeoServer se cambia desde Administración → Conexiones; al
+  // cambiar de servidor hay que volver a mirar si el satélite está publicado.
+  window.addEventListener('simtac:geoserver-cambiado', () => {
+    pintarGrupoActivo();
     verificarSatelite();
-  });
-
-  // El backend solo se guarda: reapuntarlo en caliente dejaría el socket vivo
-  // contra el servidor anterior y la sesión emitida por otro.
-  document.getElementById('capas-backend-aplicar')?.addEventListener('click', () => {
-    try {
-      const url = Config.fijar('backend', inputBackend.value);
-      pintarOrigen();
-      pintarEstado(`Backend guardado: ${url}. Se aplica al reiniciar la aplicación.`, 'ok');
-    } catch (error) {
-      pintarEstado(error.message, 'error');
-    }
-  });
-
-  // Prueba los DOS servidores: si el mapa no carga, lo primero que hay que
-  // saber es si el problema es solo de cartografía o no se llega a nada.
-  document.getElementById('capas-probar')?.addEventListener('click', async () => {
-    pintarEstado('Probando…');
-    const [cartografia, back] = await Promise.all([
-      Geoserver.probar(),
-      Api.probarConexion(Config.backend()),
-    ]);
-    const ok = String(cartografia.capabilities).startsWith('ok') && back.resultado === 'ok';
-    pintarEstado(
-      `Backend: ${back.detalle} · ` +
-        `Cartografía — capabilities: ${cartografia.capabilities} · ` +
-        `tesela base: ${cartografia.teselaBase} · satélite: ${cartografia.satelite}`,
-      ok ? 'ok' : 'error',
-    );
   });
 
   // --- Satélite ---------------------------------------------------------

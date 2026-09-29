@@ -302,20 +302,56 @@
 
 /* ============ Fase 3 · Panel de cartografía (GeoServer) ============ */
 
-/* Se abre desde el botón 🗺 de la barra del mapa. Comparte la fila de arriba
-   con la barra (`top: 96px`) y queda a su izquierda para no taparla. */
-.capas-panel,
-.cartografia-info {
+/* Dock derecho: comparte la fila de arriba con la barra del mapa (`top: 96px`)
+   y queda a su izquierda. Adentro, de derecha a izquierda: el panel de
+   dirección y la columna de cartografía (capas + punto consultado). Así ningún
+   panel tapa a otro: cada uno ocupa su propio carril y los que están cerrados
+   no ocupan lugar. El contenedor no captura clics (`pointer-events: none`):
+   el hueco entre paneles sigue siendo mapa. */
+.dock-derecho {
   position: fixed;
   top: 96px;
   right: 60px;
+  /* Termina arriba del recuadro de zoom/coordenadas (abajo a la derecha). */
+  bottom: 90px;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 950;
+  pointer-events: none;
+}
+.dock-derecho > * { pointer-events: auto; }
+
+.dock-columna {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 100%;
+  min-height: 0;
+  pointer-events: none;
+}
+.dock-columna > * { pointer-events: auto; }
+
+/* Ventana angosta: no entran lado a lado sin pisar el panel de entidad de la
+   izquierda, así que se apilan (dirección arriba, cartografía abajo) y
+   comparten la altura. */
+@media (max-width: 1180px) {
+  .dock-derecho { flex-direction: column; align-items: flex-end; }
+  .dock-derecho > .panel-direccion { flex: 0 1 auto; min-height: 0; max-height: 60%; }
+  .dock-columna { flex: 0 1 auto; }
+}
+
+/* Se abre desde el botón 🗺 de la barra del mapa. */
+.capas-panel,
+.cartografia-info {
   width: 320px;
-  max-height: calc(100vh - 200px);
+  flex: 0 1 auto;
+  min-height: 0;
   overflow-y: auto;
   background: var(--sim-fondo);
   border: 1px solid var(--sim-oro);
   border-radius: 6px;
-  z-index: 950;
   display: none;
   font-size: 12px;
   color: var(--sim-texto);
@@ -323,9 +359,9 @@
 .capas-panel.activo,
 .cartografia-info.activo { display: block; }
 
-/* El resultado de la consulta baja para no pisar el panel de capas cuando los
-   dos están abiertos. */
-.cartografia-info { top: auto; bottom: 24px; max-height: 45vh; }
+/* Con los dos abiertos, el resultado de la consulta va debajo de las capas en
+   la misma columna y no se lleva más de la mitad de la altura. */
+.cartografia-info { max-height: 45vh; }
 
 .capas-panel-header {
   display: flex;
@@ -901,15 +937,14 @@
 
 /* ===================== Fase 8 · Panel de dirección ===================== */
 
+/* Vive en el dock derecho (ver `.dock-derecho`): el dock la posiciona. */
 .panel-direccion {
-  position: fixed;
-  top: 96px; right: 60px;
-  width: 360px; max-height: calc(100vh - 130px);
+  flex: 0 0 auto;
+  width: 360px; max-height: 100%;
   display: none; flex-direction: column;
   background: var(--sim-fondo);
   border: 1px solid var(--sim-oro);
   border-radius: 6px;
-  z-index: 960;
   font-size: 12px;
 }
 .panel-direccion.visible { display: flex; }

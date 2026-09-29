@@ -5,12 +5,12 @@
     "que recompilar ni tocar código.",
     "",
     "backend    servidor Node de la simulación (REST + Socket.IO). Por defecto",
-    "           http://10.40.0.21, publicado por Traefik en el puerto 80.",
+    "           http://10.40.0.19, publicado por Traefik en el puerto 80.",
     "           Desde otro equipo se usa la IP de esta computadora.",
     "",
     "geoserver  cartografía (WMS/WFS/WMTS). Tiene que terminar en /geoserver.",
     "           La IP de la réplica del Mac cambia según por dónde esté conectado:",
-    "             Wi-Fi     10.40.0.0/23     http://10.40.0.21:3001/geoserver",
+    "             Wi-Fi     10.40.0.0/23     http://10.40.0.19:3001/geoserver",
     "             en el propio Mac          http://localhost:3001/geoserver",
     "           Esta computadora usa Wi-Fi en en1; la IP puede cambiar por DHCP.",
     "           Si cambia, actualiza backend y geoserver en este archivo.",
@@ -26,8 +26,8 @@
     "Quién gana si hay varios valores, de más a menos prioridad:",
     "  1. ?backend=... / ?geoserver=... en la URL con la que se abre la app",
     "  2. el config.json del directorio de configuración de la app, que es el que",
-    "     escribe el panel de capas y el que se puede editar en una máquina ya",
-    "     instalada (el panel muestra su ruta exacta)",
+    "     escribe Administración → Conexiones y el que se puede editar en una",
+    "     máquina ya instalada (esa sección muestra su ruta exacta)",
     "  3. ESTE archivo, que viaja con la app",
     "  4. los valores por defecto (http://10.40.0.21 y",
     "     http://10.40.0.21:3001/geoserver)",
@@ -35,6 +35,6 @@
     "Si un valor está mal escrito se descarta con un aviso en la consola y se usa",
     "el de abajo, así que un error acá no deja la app sin backend ni sin mapa."
   ],
-  "backend": "http://10.40.0.21",
-  "geoserver": "http://10.40.0.21:3001/geoserver"
+  "backend": "http://10.40.0.19",
+  "geoserver": "http://10.40.0.19:3001/geoserver"
 }

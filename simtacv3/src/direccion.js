@@ -105,7 +105,11 @@ function crearPanel() {
   panel = document.createElement('div');
   panel.id = 'panel-direccion';
   panel.className = 'panel-direccion';
-  document.body.appendChild(panel);
+  // En el dock derecho, como primer hijo: queda pegado a la barra del mapa y
+  // la cartografía se abre a su izquierda en vez de quedar tapada.
+  const dock = document.getElementById('dock-derecho');
+  if (dock) dock.prepend(panel);
+  else document.body.appendChild(panel);
   return panel;
 }
 

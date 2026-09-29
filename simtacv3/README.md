@@ -49,7 +49,7 @@ direcciones del despliegue —`backend` (el servidor Node de la simulación) y
 `geoserver` (la cartografía)— viven en **`src/config.json`**, con las IPs
 alternativas anotadas al lado. En una máquina ya instalada ese archivo queda
 dentro del binario, así que ahí manda otro `config.json` en el directorio de
-configuración de la app (`%APPDATA%/com.agrey.simtacv3/`): lo escribe el panel 🗺
+configuración de la app (`%APPDATA%/com.agrey.simtacv3/`): lo escribe Administración → Conexiones
 —que además muestra su ruta exacta— y se puede editar con un bloc de notas. Para
 una prueba puntual, `?geoserver=...` o `?backend=...` en la URL de arranque
 ganan sobre los dos. Si un valor es inválido se descarta y se usa el siguiente,

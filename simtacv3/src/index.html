@@ -44,7 +44,12 @@
           </div>
           <div class="form-group">
             <label for="signin-password">Contraseña:</label>
-            <input type="password" id="signin-password" name="password" placeholder="Tu contraseña" required />
+            <div class="password-wrap">
+              <input type="password" id="signin-password" name="password" placeholder="Tu contraseña" required />
+              <button type="button" class="password-peek" aria-label="Mantener pulsado para ver la contraseña" title="Mantener pulsado para ver la contraseña">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+            </div>
           </div>
           <button type="submit" class="login-btn">INGRESAR</button>
           <div id="signin-error" class="login-error"></div>
@@ -58,7 +63,12 @@
           </div>
           <div class="form-group">
             <label for="signup-password">Contraseña:</label>
-            <input type="password" id="signup-password" name="password" placeholder="Tu contraseña" required />
+            <div class="password-wrap">
+              <input type="password" id="signup-password" name="password" placeholder="Tu contraseña" required />
+              <button type="button" class="password-peek" aria-label="Mantener pulsado para ver la contraseña" title="Mantener pulsado para ver la contraseña">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label for="signup-nombre">Nombre Completo:</label>
@@ -73,6 +83,22 @@
           <div id="signup-loading" class="login-loading" style="display: none;">Registrando...</div>
           <p class="login-nota">Todo usuario nuevo nace con rol <strong>jugador</strong>.</p>
         </form>
+
+        <!-- Cambiar el backend sin haber entrado: si la dirección está mal no se
+             puede loguear, y Administración → Conexiones exige estar logueado. -->
+        <div class="login-servidor">
+          <button type="button" id="login-servidor-toggle" class="login-servidor-link" aria-expanded="false" aria-controls="login-servidor-form">
+            ⚙ Servidor: <span id="login-servidor-actual">—</span>
+          </button>
+          <div id="login-servidor-form" class="login-servidor-form" hidden>
+            <label for="login-servidor-url" class="login-servidor-label">Backend (simulación)</label>
+            <div class="login-servidor-fila">
+              <input id="login-servidor-url" type="text" spellcheck="false" placeholder="http://&lt;ip&gt;" />
+              <button type="button" id="login-servidor-guardar" class="login-servidor-btn">Guardar</button>
+            </div>
+            <p id="login-servidor-estado" class="login-servidor-estado"></p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -81,7 +107,6 @@
       <header class="top-menu">
         <div class="user-section">
           <button id="admin-btn" class="admin-btn" title="Administración (usuarios, unidades, ejercicios)" style="display: none;">⚙️</button>
-          <button id="catalogos-btn" class="admin-btn" title="Catálogos (armamento, vehículos)" style="display: none;">🗂️</button>
           <button id="docs-btn" class="admin-btn" title="Documentos entre unidades">📄</button>
           <button id="boletines-btn" class="admin-btn" title="Boletines de la dirección" style="display: none;">📢</button>
           <button id="mis-unidades-btn" class="admin-btn" title="Mis unidades: ubicarlas rápido en el mapa" style="display: none;">📍</button>
@@ -131,6 +156,12 @@
         <button id="mapa-cambiar-ejercicio" class="mapa-btn" title="Volver a la selección de ejercicio">⇄</button>
       </div>
 
+      <!-- Dock derecho: los paneles flotantes de la derecha se acomodan lado a
+           lado en vez de apilarse en el mismo lugar. `direccion.js` mete su
+           panel como primer hijo (el de más a la derecha, junto a la barra);
+           la columna de cartografía queda a su izquierda. -->
+      <div id="dock-derecho" class="dock-derecho">
+      <div class="dock-columna">
       <!-- Cartografía SIMTAC GeoServer: la base WMTS se elige sola por zoom
            (ver `geoserver.js`), acá va lo que el usuario decide. -->
       <div id="capas-panel" class="capas-panel">
@@ -139,32 +170,8 @@
           <button id="capas-cerrar" class="capas-cerrar" title="Cerrar">✕</button>
         </div>
 
-        <div class="capas-seccion">
-          <label class="capas-label" for="capas-url">Cartografía (GeoServer)</label>
-          <div class="capas-fila">
-            <input id="capas-url" class="capas-input" type="text" spellcheck="false"
-                   placeholder="http://10.40.0.21:3001/geoserver" />
-            <button id="capas-url-aplicar" class="capas-btn">Aplicar</button>
-          </div>
-          <p id="capas-origen" class="capas-nota">—</p>
-
-          <label class="capas-label capas-label-sep" for="capas-backend">Backend (simulación)</label>
-          <div class="capas-fila">
-            <input id="capas-backend" class="capas-input" type="text" spellcheck="false"
-                   placeholder="http://10.40.0.21" />
-            <button id="capas-backend-aplicar" class="capas-btn">Aplicar</button>
-          </div>
-          <p id="capas-backend-origen" class="capas-nota">—</p>
-          <!-- Cambiar el backend en caliente dejaría el socket y la sesión
-               apuntando al servidor viejo: se guarda y se reinicia la app. -->
-          <p class="capas-nota">El backend se aplica al reiniciar la aplicación.</p>
-
-          <p id="capas-estado" class="capas-estado">Sin verificar</p>
-          <button id="capas-probar" class="capas-btn capas-btn-ancho">Probar conexión</button>
-          <button id="capas-url-restablecer" class="capas-btn capas-btn-ancho">Restablecer al config del despliegue</button>
-          <p id="capas-archivo" class="capas-nota">—</p>
-        </div>
-
+        <!-- Las direcciones del backend y del GeoServer se configuran en
+             Administración → Sistema → Conexiones (conexiones.js). -->
         <div class="capas-seccion">
           <span class="capas-label">Base (automática por zoom)</span>
           <p id="capas-grupo" class="capas-nota">—</p>
@@ -195,6 +202,8 @@
         </div>
         <div id="cartografia-info-cuerpo" class="cartografia-info-cuerpo"></div>
       </div>
+      </div><!-- /.dock-columna -->
+      </div><!-- /#dock-derecho -->
 
       <div id="coordinates-panel" class="coordinates-panel">
         <div id="zoom-level">Zoom: --</div>
@@ -360,6 +369,7 @@
             <div class="admin-nav-botones">
               <button class="admin-tab-btn active" data-table="usuarios">👤 Usuarios</button>
               <button class="admin-tab-btn" data-table="ejercicios">🎯 Ejercicios</button>
+              <button class="admin-tab-btn" data-table="conexiones">🌐 Conexiones</button>
             </div>
           </div>
 
@@ -435,6 +445,42 @@
               <thead><tr><th>ID</th><th>Nombre</th><th>Sala</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody></tbody>
             </table>
+          </div>
+
+          <!-- Direcciones del backend y del GeoServer (conexiones.js). -->
+          <div class="admin-table-view" data-table="conexiones">
+            <div class="conexiones">
+              <div class="admin-form-group">
+                <label for="conexiones-geoserver">Cartografía (GeoServer)</label>
+                <div class="conexiones-fila">
+                  <input id="conexiones-geoserver" type="text" spellcheck="false"
+                         placeholder="http://&lt;ip&gt;:3001/geoserver" />
+                  <button id="conexiones-geoserver-aplicar" class="admin-new-btn">Aplicar</button>
+                </div>
+                <p id="conexiones-geoserver-origen" class="conexiones-nota">—</p>
+                <p class="conexiones-nota">Se aplica en el acto: el mapa vuelve a pedir las capas al servidor nuevo.</p>
+              </div>
+
+              <div class="admin-form-group">
+                <label for="conexiones-backend">Backend (simulación)</label>
+                <div class="conexiones-fila">
+                  <input id="conexiones-backend" type="text" spellcheck="false"
+                         placeholder="http://&lt;ip&gt;" />
+                  <button id="conexiones-backend-aplicar" class="admin-new-btn">Aplicar</button>
+                </div>
+                <p id="conexiones-backend-origen" class="conexiones-nota">—</p>
+                <!-- Cambiar el backend en caliente dejaría el socket y la sesión
+                     apuntando al servidor viejo: se guarda y se reinicia la app. -->
+                <p class="conexiones-nota">El backend se aplica al reiniciar la aplicación.</p>
+              </div>
+
+              <div class="conexiones-acciones">
+                <button id="conexiones-probar" class="admin-new-btn">Probar conexión</button>
+                <button id="conexiones-restablecer" class="admin-new-btn">Restablecer al config del despliegue</button>
+              </div>
+              <p id="conexiones-estado" class="conexiones-estado">Sin verificar</p>
+              <p id="conexiones-archivo" class="conexiones-nota">—</p>
+            </div>
           </div>
 
           <!-- Estas cuatro las pinta config-catalogos.js (delegación desde loadTable). -->

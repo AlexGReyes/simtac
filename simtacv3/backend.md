@@ -2407,7 +2407,7 @@ Un `404` en el primero significa que el puerto ya abre pero el ruteo por `Host`
 sigue sin regla (punto 2); un timeout o "connection refused", que todavía está
 en loopback (punto 1).
 
-Del lado del cliente, el panel 🗺 de la app tiene **Probar conexión**, que prueba
+Del lado del cliente, Administración → Conexiones tiene **Probar conexión**, que prueba
 el backend y la cartografía y dice cuál de los dos falla; y al arrancar loguea de
 qué origen salió cada URL (`[config] backend = ... (config.json del despliegue)`).
 
@@ -2435,7 +2435,7 @@ fondo del mapa, es que no hay login, ni socket, ni ejercicio.
 
 ### Lo que el cliente ya hace solo — no hace falta implementar nada
 
-El panel 🗺 tiene un botón **Probar conexión** que ahora prueba **los dos**
+Administración → Conexiones tiene un botón **Probar conexión** que ahora prueba **los dos**
 servidores y dice cuál falla. Contra el backend usa `GET {backend}/health`, que
 ya existe (`API.md`, sección de troubleshooting del socket), con un timeout
 corto de 6 s para no hacer esperar los ~20 s del timeout del sistema.

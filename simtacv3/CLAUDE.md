@@ -97,6 +97,15 @@ Reglas que NO son preferencias de estilo — romperlas deja el mapa en blanco:
   fraccionario (z8.5, a mitad de una animación) hace que OL pida el nivel vecino
   y la tesela falla. `gridWmts(zMin, zMax)` en `geoserver.js` lo evita, y el
   `View` usa `constrainResolution: true` para asentarse en niveles enteros.
+- **Nunca animar la vista hacia un zoom de otro layergroup.** Durante una
+  animación OL precarga las teselas de la vista FINAL con la capa visible ahora;
+  con el grid acotado a su banda no puede bajar de nivel y cubre la extensión
+  final con su nivel mínimo. Ir animado de z12 a z3 sobre medio planeta creaba
+  cientos de miles de teselas en un frame y congelaba la app ~20 s al entrar al
+  ejercicio. `puedeAnimarHasta()` en `mapa.js` decide: mismo grupo → anima,
+  otro grupo → salta. Toda animación nueva de la vista tiene que pasar por ahí.
+  `encuadrarTodo()` además deja fuera las entidades en 0,0 exacto (sin posición
+  cargada) y lo avisa por consola.
 - **`SIMTAC_CACHE_VERSION` solo donde toca**: z7+ en la base, siempre en el
   satélite. Mandarlo en todas las peticiones tira la caché de GWC a la basura.
 - **WMS 1.1.1, nunca 1.3.0**: con `EPSG:4326` la 1.3.0 invierte el orden de ejes
@@ -121,7 +130,7 @@ prioridad:
 | # | Origen | Para qué |
 |---|---|---|
 | 1 | `?geoserver=...` en la URL de arranque | prueba puntual, no persiste |
-| 2 | `config.json` del directorio de config de la app (`%APPDATA%/com.agrey.simtacv3/`) | **lo editable en una máquina ya instalada**; es lo que escribe el botón Aplicar del panel 🗺 |
+| 2 | `config.json` del directorio de config de la app (`%APPDATA%/com.agrey.simtacv3/`) | **lo editable en una máquina ya instalada**; es lo que escribe el botón Aplicar de Administración → Conexiones |
 | 3 | `src/config.json` | config del despliegue, viaja con la app |
 | 4 | `http://localhost:3001/geoserver` | último recurso |
 
@@ -145,9 +154,14 @@ de la app** → **`src/config.json`** → **`DEFECTOS`**.
 El segundo nivel existe porque `src/config.json` queda **dentro del binario** en
 un build de release: ahí ya no se puede editar. Lo sirven los comandos Rust
 `leer_config`/`guardar_config`/`ruta_config_usuario` (mismo directorio que
-`sesion.json`); fuera de Tauri degradan a `localStorage`. El panel 🗺 muestra de
-qué nivel salió cada valor, la ruta exacta del archivo editable, y permite
-cambiar los dos.
+`sesion.json`); fuera de Tauri degradan a `localStorage`. La sección
+Administración → Sistema → Conexiones (`src/conexiones.js`, solo administrador)
+muestra de qué nivel salió cada valor, la ruta exacta del archivo editable, y
+permite cambiar los dos. El panel 🗺 del mapa quedó solo con satélite y capas WMS.
+Como esa sección exige estar logueado, el login tiene además un enlace
+**⚙ Servidor** (`login-ui.js` → `setupServidor()`) para corregir solo el
+backend: ahí sí se aplica en el acto (`Config.fijar` + `Api.sincronizarBase()`),
+porque antes de entrar todavía no existe el socket.
 
 Cada candidata pasa por `urlSegura()`: **una inválida se descarta con un aviso
 por consola y se prueba la siguiente**, para que un archivo mal editado degrade

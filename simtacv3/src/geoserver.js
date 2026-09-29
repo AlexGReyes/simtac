@@ -123,7 +123,7 @@ export function urlBase() {
   return Config.geoserver();
 }
 
-/** De dónde salió la URL vigente. Para mostrarlo en el panel de capas. */
+/** De dónde salió la URL vigente. Para mostrarlo en Administración → Conexiones. */
 export function origenConfiguracion() {
   return Config.origen('geoserver');
 }

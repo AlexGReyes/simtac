@@ -1,11 +1,116 @@
 // Gestor de interfaz de login
 import Auth from './auth.js';
 import Session from './session.js';
+import Api from './api.js';
+import Config from './config.js';
 
 const LoginUI = {
   async init() {
     this.setupTabSwitching();
     this.setupFormHandlers();
+    this.setupPasswordPeek();
+    this.setupServidor();
+  },
+
+  // Enlace "⚙ Servidor" debajo del formulario: permite corregir la dirección
+  // del backend sin haber entrado. En la pantalla de login todavía no hay
+  // socket (se crea al entrar y cerrar sesión recarga la página), así que acá
+  // el cambio se aplica en el acto, sin reiniciar.
+  setupServidor() {
+    const toggle = document.getElementById('login-servidor-toggle');
+    const form = document.getElementById('login-servidor-form');
+    const actual = document.getElementById('login-servidor-actual');
+    const input = document.getElementById('login-servidor-url');
+    const guardar = document.getElementById('login-servidor-guardar');
+    const estado = document.getElementById('login-servidor-estado');
+    if (!toggle || !form || !input || !guardar) return;
+
+    const pintarEstado = (texto, clase = '') => {
+      estado.textContent = texto;
+      estado.className = `login-servidor-estado ${clase}`;
+    };
+    const pintarActual = () => {
+      actual.textContent = Config.backend();
+    };
+    pintarActual();
+
+    toggle.addEventListener('click', () => {
+      const abrir = form.hidden;
+      form.hidden = !abrir;
+      toggle.setAttribute('aria-expanded', String(abrir));
+      if (abrir) {
+        input.value = Config.backend();
+        pintarEstado('');
+        input.focus();
+        input.select();
+      }
+    });
+
+    const aplicar = async () => {
+      let url;
+      try {
+        url = Config.fijar('backend', input.value);
+      } catch (error) {
+        pintarEstado(error.message, 'error');
+        return;
+      }
+      Api.sincronizarBase();
+      input.value = url;
+      pintarActual();
+      pintarEstado('Guardado. Probando conexión…');
+      guardar.disabled = true;
+      const prueba = await Api.probarConexion(url);
+      guardar.disabled = false;
+      pintarEstado(
+        prueba.resultado === 'ok' ? `Conectado: ${prueba.detalle}.` : `Guardado, pero ${prueba.detalle}.`,
+        prueba.resultado === 'ok' ? 'ok' : 'error',
+      );
+    };
+
+    guardar.addEventListener('click', aplicar);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        aplicar();
+      }
+    });
+  },
+
+  // Muestra la contraseña solo mientras el botón del ojo está pulsado
+  // (mouse, táctil o Espacio/Enter con el botón enfocado).
+  setupPasswordPeek() {
+    document.querySelectorAll('.password-peek').forEach(btn => {
+      const input = btn.parentElement.querySelector('input');
+      if (!input) return;
+
+      const mostrar = () => {
+        input.type = 'text';
+        btn.classList.add('activo');
+      };
+      const ocultar = () => {
+        input.type = 'password';
+        btn.classList.remove('activo');
+      };
+
+      btn.addEventListener('pointerdown', (e) => {
+        e.preventDefault(); // no robarle el foco al campo
+        btn.setPointerCapture(e.pointerId);
+        mostrar();
+      });
+      ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev =>
+        btn.addEventListener(ev, ocultar));
+
+      btn.addEventListener('keydown', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          mostrar();
+        }
+      });
+      btn.addEventListener('keyup', (e) => {
+        if (e.key === ' ' || e.key === 'Enter') ocultar();
+      });
+      btn.addEventListener('blur', ocultar);
+    });
   },
 
   setupTabSwitching() {
