@@ -1,7 +1,11 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
-use tauri::Manager;
+use std::sync::Mutex;
+use std::time::Duration;
+use tauri::ipc::Channel;
+use tauri::{Manager, State};
+use tauri_plugin_updater::{Update, UpdaterExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Unidad {
@@ -165,10 +169,124 @@ fn ruta_config_usuario(app: tauri::AppHandle) -> Result<String, String> {
     Ok(ruta_config(&app)?.to_string_lossy().into_owned())
 }
 
+// ---------------------------------------------------------------------------
+// Actualizador (tauri-plugin-updater)
+//
+// Al abrir, antes del login, el frontend (`actualizador.js`) pregunta si hay
+// una versión publicada distinta de la instalada. La URL del manifiesto
+// `latest.json` NO está fija en `tauri.conf.json`: sale de la misma cadena de
+// configuración que el backend (`Config.actualizaciones()`), así que si el
+// servidor cambia de IP las actualizaciones lo siguen.
+//
+// Política del ejercicio: TODOS los equipos con la MISMA versión. Por eso el
+// comparador es "distinta", no "mayor": si se republica una versión anterior
+// (volver atrás un despliegue roto), los clientes también bajan a esa.
+//
+// El instalador viene firmado: el plugin verifica la firma contra la clave
+// pública de `tauri.conf.json` antes de ejecutarlo, aunque el manifiesto se
+// sirva por http plano en la LAN.
+// ---------------------------------------------------------------------------
+
+/// La actualización encontrada por `buscar_actualizacion`, a la espera de que
+/// el frontend pida instalarla.
+#[derive(Default)]
+struct ActualizacionPendiente(Mutex<Option<Update>>);
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct InfoActualizacion {
+    version: String,
+    version_actual: String,
+    notas: Option<String>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(tag = "evento", content = "datos", rename_all = "camelCase")]
+enum ProgresoDescarga {
+    Inicio { total: Option<u64> },
+    Avance { bytes: usize },
+    Fin,
+}
+
+#[tauri::command]
+async fn buscar_actualizacion(
+    app: tauri::AppHandle,
+    pendiente: State<'_, ActualizacionPendiente>,
+    url: String,
+) -> Result<Option<InfoActualizacion>, String> {
+    // En desarrollo la versión es la de `tauri.conf.json` (0.1.0): contra una
+    // versión publicada siempre daría "distinta" y cada `tauri dev` intentaría
+    // reinstalar la app.
+    if cfg!(debug_assertions) {
+        println!("[actualizador] build de desarrollo: no se buscan actualizaciones");
+        return Ok(None);
+    }
+
+    let endpoint: tauri::Url = url
+        .parse()
+        .map_err(|e| format!("URL de actualizaciones inválida ({}): {}", url, e))?;
+    let actualizacion = app
+        .updater_builder()
+        .endpoints(vec![endpoint])
+        .map_err(|e| e.to_string())?
+        .version_comparator(|actual, remota| remota.version != actual)
+        .timeout(Duration::from_secs(10))
+        .build()
+        .map_err(|e| e.to_string())?
+        .check()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    let info = actualizacion.as_ref().map(|a| InfoActualizacion {
+        version: a.version.clone(),
+        version_actual: a.current_version.clone(),
+        notas: a.body.clone(),
+    });
+    *pendiente.0.lock().map_err(|e| e.to_string())? = actualizacion;
+    Ok(info)
+}
+
+#[tauri::command]
+async fn instalar_actualizacion(
+    app: tauri::AppHandle,
+    pendiente: State<'_, ActualizacionPendiente>,
+    progreso: Channel<ProgresoDescarga>,
+) -> Result<(), String> {
+    let actualizacion = pendiente
+        .0
+        .lock()
+        .map_err(|e| e.to_string())?
+        .take()
+        .ok_or("No hay ninguna actualización pendiente: buscarla primero")?;
+
+    let mut empezo = false;
+    actualizacion
+        .download_and_install(
+            |bytes, total| {
+                if !empezo {
+                    empezo = true;
+                    let _ = progreso.send(ProgresoDescarga::Inicio { total });
+                }
+                let _ = progreso.send(ProgresoDescarga::Avance { bytes });
+            },
+            || {
+                let _ = progreso.send(ProgresoDescarga::Fin);
+            },
+        )
+        .await
+        .map_err(|e| e.to_string())?;
+
+    // En Windows el instalador NSIS ya cerró la app para reemplazarla; en el
+    // resto de plataformas hay que reiniciar para cargar la versión nueva.
+    app.restart();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(ActualizacionPendiente::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             cargar_estado_actual,
@@ -177,7 +295,9 @@ pub fn run() {
             borrar_sesion,
             leer_config,
             guardar_config,
-            ruta_config_usuario
+            ruta_config_usuario,
+            buscar_actualizacion,
+            instalar_actualizacion
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

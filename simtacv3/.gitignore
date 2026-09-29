@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 /test-results/
 /playwright-report/
+
+# Paquete de actualización generado por `npm run compilar` (se copia al servidor)
+/publicar/
+/src-tauri/tauri.version.json

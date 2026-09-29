@@ -68,6 +68,74 @@
 
 .ejercicio-screen.visible { display: flex; }
 
+/* Actualización obligatoria al arrancar (actualizador.js): tapa todo, incluso
+   el login, hasta que la app se reinicia con la versión nueva. */
+.actualizacion-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 20000; /* por encima del login (10000) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: radial-gradient(circle at 50% 30%, var(--sim-ejercicio-grad-1), var(--sim-ejercicio-grad-2) 70%);
+}
+.actualizacion-caja {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px;
+  text-align: center;
+  background: var(--sim-fondo);
+  border: 2px solid var(--sim-oro);
+  border-radius: 8px;
+  color: var(--sim-texto);
+}
+.actualizacion-caja h1 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  letter-spacing: 2px;
+  color: var(--sim-oro);
+}
+.actualizacion-motivo { margin: 0 0 16px; font-size: 12px; color: rgba(var(--sim-texto-rgb), 0.7); }
+.actualizacion-versiones { margin: 0 0 12px; font-size: 13px; font-family: monospace; }
+.actualizacion-notas {
+  margin: 0 0 16px;
+  padding: 10px;
+  font-size: 12px;
+  text-align: left;
+  white-space: pre-wrap;
+  background: rgba(var(--sim-negro-rgb), 0.25);
+  border-radius: 4px;
+}
+.actualizacion-barra {
+  height: 8px;
+  overflow: hidden;
+  background: rgba(var(--sim-blanco-rgb), 0.1);
+  border-radius: 4px;
+}
+.actualizacion-barra-relleno {
+  width: 0;
+  height: 100%;
+  background: var(--sim-oro);
+  transition: width 0.2s ease;
+}
+.actualizacion-estado { margin: 10px 0 0; font-size: 12px; color: rgba(var(--sim-texto-rgb), 0.75); }
+.actualizacion-estado.error { color: var(--sim-rojo); }
+.actualizacion-btn {
+  margin-top: 16px;
+  padding: 8px 20px;
+  background: rgba(var(--sim-oro-rgb), 0.2);
+  border: 1px solid var(--sim-oro);
+  border-radius: 4px;
+  box-shadow: none;
+  color: var(--sim-oro);
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.actualizacion-btn:hover,
+.actualizacion-btn:active { background: rgba(var(--sim-oro-rgb), 0.35); border-color: var(--sim-oro); }
+
 .ej-panel {
   width: min(720px, 92vw);
   max-height: 86vh;

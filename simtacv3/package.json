@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "tauri": "tauri",
+    "build:version": "node scripts/version.mjs",
+    "compilar": "node scripts/compilar.mjs",
+    "subir": "node scripts/subir.mjs",
     "test:movimiento": "node pruebas/movimiento-protocolo.mjs && node pruebas/movimiento-ruta.mjs",
     "test:movimiento:browser": "playwright test pruebas/movimiento-browser.spec.js --workers=1 --reporter=line"
   },

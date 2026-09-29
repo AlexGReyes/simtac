@@ -39,6 +39,10 @@ const Conexiones = {
     const inputBack = this.el('conexiones-backend');
     if (inputGeo) inputGeo.value = Config.geoserver();
     if (inputBack) inputBack.value = Config.backend();
+    const inputAct = this.el('conexiones-actualizaciones');
+    if (inputAct) inputAct.value = Config.actualizaciones();
+    const origenAct = this.el('conexiones-actualizaciones-origen');
+    if (origenAct) origenAct.textContent = `Origen: ${Config.origen('actualizaciones')}`;
     const origenGeo = this.el('conexiones-geoserver-origen');
     const origenBack = this.el('conexiones-backend-origen');
     if (origenGeo) origenGeo.textContent = `Origen: ${Config.origen('geoserver')}`;
@@ -80,6 +84,17 @@ const Conexiones = {
         const url = Config.fijar('backend', this.el('conexiones-backend').value);
         this.pintar();
         this.pintarEstado(`Backend guardado: ${url}. Se aplica al reiniciar la aplicación.`, 'ok');
+      } catch (error) {
+        this.pintarEstado(error.message, 'error');
+      }
+    });
+
+    // Se usa en el próximo arranque: la verificación es solo al abrir la app.
+    this.el('conexiones-actualizaciones-aplicar')?.addEventListener('click', () => {
+      try {
+        const url = Config.fijar('actualizaciones', this.el('conexiones-actualizaciones').value);
+        this.pintar();
+        this.pintarEstado(`Actualizaciones: ${url}. Se consulta al abrir la aplicación.`, 'ok');
       } catch (error) {
         this.pintarEstado(error.message, 'error');
       }

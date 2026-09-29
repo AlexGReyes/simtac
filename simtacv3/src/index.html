@@ -99,6 +99,9 @@
             <p id="login-servidor-estado" class="login-servidor-estado"></p>
           </div>
         </div>
+
+        <!-- Fecha y hora de compilación, de src/version.json (scripts/version.mjs). -->
+        <p id="login-version" class="login-version"></p>
       </div>
     </div>
 
@@ -472,6 +475,17 @@
                 <!-- Cambiar el backend en caliente dejaría el socket y la sesión
                      apuntando al servidor viejo: se guarda y se reinicia la app. -->
                 <p class="conexiones-nota">El backend se aplica al reiniciar la aplicación.</p>
+              </div>
+
+              <div class="admin-form-group">
+                <label for="conexiones-actualizaciones">Actualizaciones (latest.json)</label>
+                <div class="conexiones-fila">
+                  <input id="conexiones-actualizaciones" type="text" spellcheck="false"
+                         placeholder="http://&lt;ip&gt;/actualizaciones/latest.json" />
+                  <button id="conexiones-actualizaciones-aplicar" class="admin-new-btn">Aplicar</button>
+                </div>
+                <p id="conexiones-actualizaciones-origen" class="conexiones-nota">—</p>
+                <p class="conexiones-nota">Se consulta al abrir la aplicación, antes del login. Si nadie la fija, sigue al backend.</p>
               </div>
 
               <div class="conexiones-acciones">

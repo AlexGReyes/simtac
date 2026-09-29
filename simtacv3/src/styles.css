@@ -190,12 +190,26 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   background: none;
   border: none;
+  border-radius: 0 4px 4px 0;
+  box-shadow: none;
   color: rgba(var(--sim-blanco-rgb), 0.85);
   cursor: pointer;
   touch-action: none;
   user-select: none;
+}
+
+.password-peek svg {
+  flex-shrink: 0;
+}
+
+/* Anula el hover/active genérico de `button` (borde dorado, fondo claro). */
+.password-peek:hover,
+.password-peek:active {
+  background: none;
+  border: none;
 }
 
 .password-peek:hover,
@@ -239,6 +253,16 @@ body {
   cursor: not-allowed;
 }
 
+/* Versión (fecha y hora de compilación) al pie del login */
+.login-version {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: rgba(var(--sim-texto-rgb), 0.45);
+  font-family: monospace;
+}
+
 /* Enlace "⚙ Servidor" del login: cambiar el backend sin haber entrado */
 .login-servidor {
   margin-top: 20px;
@@ -250,12 +274,19 @@ body {
 .login-servidor-link {
   background: none;
   border: none;
+  box-shadow: none;
   padding: 2px 4px;
   color: rgba(var(--sim-texto-rgb), 0.6);
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
   word-break: break-all;
+}
+
+.login-servidor-link:hover,
+.login-servidor-link:active {
+  background: none;
+  border: none;
 }
 
 .login-servidor-link:hover,
@@ -313,14 +344,17 @@ body {
   border: 1px solid rgba(var(--sim-oro-rgb), 0.4);
   color: var(--sim-oro);
   border-radius: 4px;
+  box-shadow: none;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   cursor: pointer;
 }
 
-.login-servidor-btn:hover:not(:disabled) {
+.login-servidor-btn:hover:not(:disabled),
+.login-servidor-btn:active:not(:disabled) {
   background: rgba(var(--sim-oro-rgb), 0.35);
+  border-color: var(--sim-oro);
 }
 
 .login-servidor-btn:disabled {

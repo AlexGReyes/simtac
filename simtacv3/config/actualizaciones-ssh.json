@@ -1,0 +1,25 @@
+{
+  "_ayuda": [
+    "Destino SSH/SFTP donde `npm run subir` / `npm run compilar -- --subir` publica",
+    "las actualizaciones del cliente (PEDIDO_SERVIDOR_ACTUALIZACIONES.md §3).",
+    "Sin secretos: la clave PRIVADA vive en ~/.ssh de la máquina que compila.",
+    "",
+    "host        IP o nombre del servidor. Vacío = el host del backend de src/config.json.",
+    "puerto      puerto SSH.",
+    "usuario     cuenta SFTP enjaulada de publicación.",
+    "ruta        carpeta de actualizaciones TAL COMO SE VE desde la cuenta SFTP.",
+    "clave       clave privada; ~ = carpeta del usuario.",
+    "knownHosts  archivo con la clave del HOST del servidor (se fija, no se acepta",
+    "            a ciegas). Se llena con `npm run subir -- --registrar-host` después",
+    "            de comparar la huella con la que informe el backend.",
+    "",
+    "Cualquier campo se puede pisar con SIMTAC_SSH_HOST, _PUERTO, _USUARIO, _RUTA,",
+    "_CLAVE, _KNOWN_HOSTS o con --servidor <host> en la línea de comandos."
+  ],
+  "host": "",
+  "puerto": 22,
+  "usuario": "simtac-publicador",
+  "ruta": "/actualizaciones",
+  "clave": "~/.ssh/simtac_publicador",
+  "knownHosts": "config/actualizaciones_known_hosts"
+}

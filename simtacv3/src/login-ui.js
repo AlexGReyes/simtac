@@ -10,6 +10,23 @@ const LoginUI = {
     this.setupFormHandlers();
     this.setupPasswordPeek();
     this.setupServidor();
+    this.mostrarVersion();
+  },
+
+  // Versión = fecha y hora de compilación (`scripts/version.mjs` escribe
+  // `version.json` antes de cada `tauri dev`/`tauri build`).
+  async mostrarVersion() {
+    const el = document.getElementById('login-version');
+    if (!el) return;
+    try {
+      const respuesta = await fetch(new URL('./version.json', import.meta.url), { cache: 'no-store' });
+      if (!respuesta.ok) throw new Error(`HTTP ${respuesta.status}`);
+      const { version } = await respuesta.json();
+      el.textContent = `Versión ${version}`;
+    } catch (error) {
+      console.warn('[version] version.json no se pudo leer:', error.message);
+      el.textContent = 'Versión sin estampar';
+    }
   },
 
   // Enlace "⚙ Servidor" debajo del formulario: permite corregir la dirección

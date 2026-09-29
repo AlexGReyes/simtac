@@ -1,6 +1,6 @@
-// Configuración del despliegue: las dos URLs que cambian de una instalación a
-// otra —el **backend Node** de la simulación y el **GeoServer** de la
-// cartografía— y de dónde salen.
+// Configuración del despliegue: las URLs que cambian de una instalación a
+// otra —el **backend Node** de la simulación, el **GeoServer** de la
+// cartografía y el manifiesto de **actualizaciones**— y de dónde salen.
 //
 // El objetivo es que mover el sistema a otra máquina o a otra red sea editar un
 // archivo, nunca tocar código ni recompilar. Cadena de resolución por clave, de
@@ -26,8 +26,23 @@ export const DEFECTOS = {
   geoserver: 'http://10.40.0.21:3001/geoserver',
 };
 
-/** Claves que este módulo conoce. Cualquier otra en el JSON se ignora. */
-const CLAVES = Object.keys(DEFECTOS);
+/**
+ * Manifiesto del actualizador (`actualizador.js`). No tiene valor fijo de
+ * último recurso: si nadie lo configuró, vive en el mismo servidor que el
+ * backend, así que sigue al backend cuando este cambia de IP.
+ */
+const RUTA_ACTUALIZACIONES = '/actualizaciones/latest.json';
+
+/**
+ * Claves que este módulo conoce. Cualquier otra en el JSON se ignora. El orden
+ * importa: `actualizaciones` se resuelve después de `backend` porque su valor
+ * por defecto sale de él.
+ */
+const CLAVES = [...Object.keys(DEFECTOS), 'actualizaciones'];
+
+function defecto(clave) {
+  return clave === 'actualizaciones' ? `${valores.backend}${RUTA_ACTUALIZACIONES}` : DEFECTOS[clave];
+}
 
 /**
  * Valida y normaliza una URL de servicio. Devuelve la URL sin barra final o
@@ -75,6 +90,7 @@ export function urlSegura(valor, { prohibirRest = false } = {}) {
 const VALIDADORES = {
   backend: (valor) => urlSegura(valor),
   geoserver: (valor) => urlSegura(valor, { prohibirRest: true }),
+  actualizaciones: (valor) => urlSegura(valor),
 };
 
 // ---------------------------------------------------------------------------
@@ -164,7 +180,7 @@ export async function cargar() {
       [`query string (?${clave}=)`, leerDeQuery(clave)],
       ['config del usuario', usuario?.[clave]],
       ['config.json del despliegue', despliegue?.[clave]],
-      ['valor por defecto', DEFECTOS[clave]],
+      ['valor por defecto', defecto(clave)],
     ];
 
     for (const [origen, valor] of candidatas) {
@@ -192,6 +208,11 @@ export function backend() {
 /** URL base del GeoServer de la cartografía. */
 export function geoserver() {
   return valores.geoserver;
+}
+
+/** URL del manifiesto `latest.json` del actualizador. */
+export function actualizaciones() {
+  return valores.actualizaciones;
 }
 
 /** De dónde salió el valor vigente de una clave. Para mostrarlo en la interfaz. */
@@ -227,7 +248,11 @@ export function fijar(clave, valor) {
 }
 
 function persistir() {
-  const datos = JSON.stringify(valores, null, 2);
+  // `actualizaciones` solo se fija si el usuario la eligió: si no, quedaría
+  // clavada al backend de hoy y dejaría de seguirlo cuando cambie de IP.
+  const aGuardar = { ...valores };
+  if (origenes.actualizaciones !== 'config del usuario') delete aGuardar.actualizaciones;
+  const datos = JSON.stringify(aGuardar, null, 2);
   invocar('guardar_config', { datos }).catch(() => {
     try {
       window.localStorage.setItem(CLAVE_LOCAL, datos);
@@ -262,6 +287,7 @@ export default {
   cargar,
   backend,
   geoserver,
+  actualizaciones,
   origen,
   rutaConfigUsuario,
   estaCargado,

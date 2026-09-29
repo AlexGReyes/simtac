@@ -39,7 +39,8 @@ async function corre(nombre, escenario, esperado) {
   const mod = await import(`../src/config.js?v=${Math.random()}`);
   await mod.cargar();
   const real = { backend: mod.backend(), geoserver: mod.geoserver(),
-                 origenGeo: mod.origen('geoserver'), origenBack: mod.origen('backend') };
+                 origenGeo: mod.origen('geoserver'), origenBack: mod.origen('backend'),
+                 actualizaciones: mod.actualizaciones(), origenAct: mod.origen('actualizaciones') };
   const ok = Object.entries(esperado).every(([k, v]) => real[k] === v);
   casos.push(ok);
   console.log(`${ok ? 'OK  ' : 'FALLA'} ${nombre}`);
@@ -72,6 +73,14 @@ await corre('sin config.json quedan los valores por defecto',
   { despliegue: false },
   { geoserver: 'http://10.40.0.21:3001/geoserver', backend: 'http://10.40.0.21',
     origenGeo: 'valor por defecto' });
+
+await corre('actualizaciones sigue al backend si nadie la fijó',
+  { query: '?backend=http://10.0.0.9' },
+  { actualizaciones: 'http://10.0.0.9/actualizaciones/latest.json', origenAct: 'valor por defecto' });
+
+await corre('actualizaciones del config del usuario gana sobre el derivado',
+  { usuario: { actualizaciones: 'http://repo.local/simtac/latest.json' } },
+  { actualizaciones: 'http://repo.local/simtac/latest.json', origenAct: 'config del usuario' });
 
 console.warn = warn;
 

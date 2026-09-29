@@ -13,6 +13,80 @@ All commands should be run from the project root directory:
 - **`npm run tauri dev`** — Start the app in development mode with hot-reload. Frontend changes (HTML/JS/CSS in `src/`) reload instantly; Rust backend changes require restarting dev mode.
 - **`npm run tauri build`** — Build the app in release mode and generate platform-specific bundles and installers.
 - **`npm run tauri info`** — Display environment information (Node.js, Rust, Cargo versions, etc.). Useful for debugging build issues.
+- **`npm run build:version`** — Estampa la versión visible de la app en `src/version.json`.
+
+## Versión de la aplicación
+
+La versión que se ve al pie del login es la **fecha y hora de compilación**, en
+hora local, con la forma `AAAA.MM.DD-HHMM` (ej. `2026.09.29-1119`). La escribe
+`scripts/version.mjs` en `src/version.json` y la lee `login-ui.js` →
+`mostrarVersion()`.
+
+- Se regenera sola antes de `npm run tauri dev` y `npm run tauri build`
+  (`beforeDevCommand` con `wait: true` / `beforeBuildCommand` en
+  `tauri.conf.json`).
+- ⚠️ **Regla: después de CUALQUIER cambio de código, correr
+  `npm run build:version`** y commitear `src/version.json` junto con el cambio.
+  Así la versión del repo siempre corresponde a la última actualización.
+- La misma marca va también en semver (`AAAA.MMDD.HHMM`, ej. `2026.929.1119`),
+  que es la que compara el actualizador. El `version` 0.1.0 de
+  `tauri.conf.json` NO se edita: `npm run compilar` le pasa la semver a
+  `tauri build` con `--config` en un archivo temporal. Por eso el bundle es
+  solo NSIS: WiX/MSI no acepta un major > 255.
+
+## Actualización automática (tauri-plugin-updater)
+
+Al abrir la app, **antes del login**, `actualizador.js` pregunta al servidor si
+hay otra versión publicada; si la hay, la instala sin opción de posponer y la
+app se reinicia. Política del ejercicio: **todos los equipos con la misma
+versión** — el comparador en Rust es "distinta", no "mayor", así que
+republicar una versión anterior también baja a los clientes.
+
+- **Dónde busca:** clave `actualizaciones` de `config.js` (misma cadena que
+  backend/GeoServer, editable en Administración → Conexiones). Si nadie la
+  fija: `<backend>/actualizaciones/latest.json`, así sigue al backend si
+  cambia de IP.
+- **Rust** (`lib.rs`): `buscar_actualizacion(url)` e
+  `instalar_actualizacion(progreso: Channel)`. En builds de desarrollo
+  (`debug_assertions`) no busca: `tauri dev` tiene versión 0.1.0 y siempre
+  "necesitaría" actualizar.
+- **Si el servidor no responde, la app sigue** con un aviso: un servidor caído
+  no puede dejar a todo el ejercicio sin entrar.
+- **Firma:** el instalador se verifica contra la `pubkey` de
+  `tauri.conf.json` antes de ejecutarse (probado: una firma adulterada se
+  rechaza). La clave privada vive en `~/.tauri/simtacv3.key`, **nunca en el
+  repo**; si se pierde, las apps instaladas ya no aceptan actualizaciones y
+  hay que reinstalar a mano. `dangerousInsecureTransportProtocol: true` es
+  porque la LAN sirve por http plano: la firma es la que protege.
+
+### Publicar una versión (SSH/SFTP)
+
+Del lado servidor no hay lógica: una carpeta servida por nginx detrás de
+Traefik en `/actualizaciones/` y una cuenta SFTP enjaulada
+(`PEDIDO_SERVIDOR_ACTUALIZACIONES.md`). Nosotros subimos todo:
+
+```
+npm run compilar -- --notas "qué cambia" --subir              # sube .exe + .sig, NO publica
+npm run compilar -- --notas "qué cambia" --subir --publicar   # además reemplaza latest.json
+npm run subir -- --publicar --version 2026.929.1157           # volver atrás a una compilada
+npm run subir -- --registrar-host                             # fijar la clave del servidor (1 vez)
+```
+
+- `scripts/subir.mjs` usa `sftp -b` (OpenSSH): `.part` + `rename` para los
+  archivos, y `latest.json.part` → `rename` (atómico) para publicar.
+- Destino en `config/actualizaciones-ssh.json` (sin secretos; host vacío = el
+  del backend de `src/config.json`). Clave privada en
+  `~/.ssh/simtac_publicador`, **nunca en el repo**. Solo clave, sin
+  contraseña (`BatchMode=yes`).
+- La clave del **host** se fija en `config/actualizaciones_known_hosts`
+  (`StrictHostKeyChecking=yes`): si cambia, el script se niega a subir.
+  Registrarla solo después de comparar la huella con la que informe el backend.
+- `latest.json` lleva `__SIMTAC_BASE__` en la `url`; nginx lo reemplaza por
+  el origen de cada request, así la descarga sigue a la IP del servidor.
+- `publicar/actualizaciones/` (local, gitignored) tiene la misma estructura
+  que el servidor, por si hay que copiarla a mano.
+- Probado contra `atmoz/sftp` + `nginx:alpine` en Docker con la config del
+  pedido: todo el circuito, incluida la app de release leyendo el manifiesto.
 
 ## Key Technologies
 

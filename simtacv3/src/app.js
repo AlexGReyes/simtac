@@ -18,6 +18,7 @@ import Mapa from './mapa.js';
 import { mapaALonLat } from './geo.js';
 import Geoserver from './geoserver.js';
 import Config from './config.js';
+import Actualizador from './actualizador.js';
 import PanelEntidad from './panel-entidad.js';
 import Movimiento from './movimiento.js';
 import Deteccion from './deteccion.js';
@@ -581,6 +582,10 @@ async function arrancar() {
   // la URL del GeoServer ya resuelta, así que esto tiene que estar listo antes.
   await Config.cargar();
   Api.sincronizarBase();
+  // Antes del login y de revalidar la sesión: si la versión publicada es
+  // distinta de la instalada, se actualiza acá y la app se reinicia (no
+  // vuelve). Todos los equipos del ejercicio tienen que usar la misma versión.
+  await Actualizador.verificarAlArrancar();
   await Session.init();
 
   await LoginUI.init();
