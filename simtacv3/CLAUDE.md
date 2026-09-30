@@ -81,12 +81,23 @@ npm run subir -- --registrar-host                             # fijar la clave d
 - La clave del **host** se fija en `config/actualizaciones_known_hosts`
   (`StrictHostKeyChecking=yes`): si cambia, el script se niega a subir.
   Registrarla solo después de comparar la huella con la que informe el backend.
+  **Ya registrada** (2026-09-30) para `10.40.0.19`: ED25519
+  `SHA256:RykzfYnfNfwJ/Vul8n/t0ZcEDL0YksuU8iHU+NCvLvU`, la misma que informó
+  el backend y la que devuelve el servidor en vivo. Si la IP del backend
+  cambia, hay que volver a registrar (la línea va atada a la IP).
+- Servidor real (`RESPUESTA_PEDIDO_SERVIDOR_ACTUALIZACIONES.md`): Mac mini con
+  Docker Desktop, SFTP en un contenedor propio (solo clave pública, sin shell,
+  enjaulado en `/actualizaciones`; borrar está permitido para limpiar versiones
+  viejas). Manifiesto en `http://10.40.0.19/actualizaciones/latest.json`
+  (404 hasta la primera publicación). El puerto 22 del host es ese contenedor.
 - `latest.json` lleva `__SIMTAC_BASE__` en la `url`; nginx lo reemplaza por
   el origen de cada request, así la descarga sigue a la IP del servidor.
 - `publicar/actualizaciones/` (local, gitignored) tiene la misma estructura
   que el servidor, por si hay que copiarla a mano.
 - Probado contra `atmoz/sftp` + `nginx:alpine` en Docker con la config del
   pedido: todo el circuito, incluida la app de release leyendo el manifiesto.
+  Contra el servidor real: login SFTP con nuestra clave verificado; falta la
+  prueba final (publicar la N+1 y abrir un equipo con la N).
 
 ## Key Technologies
 
