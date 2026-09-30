@@ -100,6 +100,6 @@
   /* --- Mapa (mapa.js lee estos valores en tiempo de ejecución con
        getComputedStyle, porque OpenLayers dibuja en canvas y no puede
        consumir var() directamente) --- */
-  --sim-anillo-vision-rgb: 90, 170, 255;   /* anillo de rango de visión */
+  --sim-anillo-vision-rgb: 76, 255, 51;    /* anillo de rango de visión (verde brillante) */
   --sim-anillo-umbral-rgb: 255, 159, 10;   /* anillo de umbral de combate */
 }

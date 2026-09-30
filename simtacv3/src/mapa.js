@@ -725,7 +725,7 @@ function dibujarRangos() {
 }
 
 // ---------------------------------------------------------------------------
-// Anillos de selección: rango de visión (azul) y umbral de combate (naranja)
+// Anillos de selección: rango de visión (verde) y umbral de combate (naranja)
 //
 // A diferencia de `capaRangos` (toggle manual, solo entidades propias), estos
 // se dibujan siempre para lo que esté seleccionado — propio o enemigo, si es
