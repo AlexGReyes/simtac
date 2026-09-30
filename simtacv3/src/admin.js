@@ -61,6 +61,10 @@ class AdminManager {
       });
     });
 
+    // Altas/ediciones en caliente (de este admin, de otro, o del panel de
+    // dirección): las listas cacheadas quedan viejas.
+    window.addEventListener('simtac:entidades-cambiadas', () => this.entidadesCambiadas());
+
     document.getElementById('admin-close-btn')?.addEventListener('click', () => this.close());
     document.getElementById('admin-form-close-btn')?.addEventListener('click', () => this.closeForm());
     document.getElementById('admin-form-cancel-btn')?.addEventListener('click', () => this.closeForm());
@@ -318,6 +322,26 @@ class AdminManager {
 
   invalidarControladores() {
     this.controladores = null;
+  }
+
+  /**
+   * Una unidad o vehículo se creó o cambió en el ejercicio en vivo. Se tiran
+   * las listas cacheadas que dependen de eso y, si Administración está
+   * abierta en una tabla afectada, se recarga (agrupando ráfagas: un alta
+   * puede traer varios eventos seguidos).
+   */
+  entidadesCambiadas() {
+    this.data.unidades_todas = null;
+    this.data.asignaciones = null;
+    this.invalidarControladores();
+    clearTimeout(this.recargaPendiente);
+    this.recargaPendiente = setTimeout(() => {
+      const abierta = document.getElementById('admin-modal')?.classList.contains('active');
+      const formAbierto = document.getElementById('admin-form-modal')?.classList.contains('active');
+      if (abierta && !formAbierto && ['unidades', 'asignaciones', 'vehiculos'].includes(this.currentTable)) {
+        this.loadTable(this.currentTable);
+      }
+    }, 400);
   }
 
   /**
@@ -1350,7 +1374,7 @@ class AdminManager {
         if (jugadorDeLaUnidad !== null && jugadorDeLaUnidad !== '') {
           data.usuarioId = Number(jugadorDeLaUnidad);
         }
-        if (this.ejercicioEnVivo()) {
+        if (await this.ejercicioEnVivoPara(jugadorDeLaUnidad)) {
           await this.crearUnidadEnVivo(data, jugadorDeLaUnidad);
           this.invalidarControladores();
           alert('Unidad creada en el ejercicio en curso');
@@ -1424,10 +1448,27 @@ class AdminManager {
     }
   }
 
-  /** ¿El ejercicio en contexto es el que está corriendo en el mapa? */
-  ejercicioEnVivo() {
+  /**
+   * Participantes del ejercicio que corre en el mapa. Sin caché: las altas
+   * son pocas y un participante recién agregado tiene que contar.
+   */
+  participantesEnVivo() {
+    return this.apiGet(`/ejercicios/${Store.ejercicioId}/participantes`).catch(() => []);
+  }
+
+  /**
+   * ¿La unidad de este jugador tiene que nacer en el ejercicio que está
+   * corriendo? Sí si hay uno en marcha, el jugador participa de él y el
+   * contexto de Administración no apunta explícitamente a OTRO ejercicio.
+   * Antes solo se miraba el contexto: con «Todos los ejercicios» la unidad
+   * quedaba en la base y no llegaba al mapa.
+   */
+  async ejercicioEnVivoPara(jugadorId) {
+    if (!Store.iniciado || !Store.ejercicioId || !Socket.conectado() || !jugadorId) return false;
     const contexto = Catalogos.ejercicioActual();
-    return !!contexto && Number(contexto) === Store.ejercicioId && Store.iniciado && Socket.conectado();
+    if (contexto && Number(contexto) !== Store.ejercicioId) return false;
+    const participantes = await this.participantesEnVivo();
+    return participantes.some((p) => String(idUsuario(p)) === String(jugadorId));
   }
 
   /**
@@ -1440,7 +1481,7 @@ class AdminManager {
    */
   async crearUnidadEnVivo(data, jugadorId) {
     if (!jugadorId) throw new Error('Elegí el jugador que la controla: de él sale el bando');
-    const jugador = (this.data.participantes_contexto || [])
+    const jugador = (await this.participantesEnVivo())
       .find((p) => String(idUsuario(p)) === String(jugadorId));
     if (!jugador?.bando) {
       throw new Error('Ese jugador no tiene bando en este ejercicio: revisá su participación en Participantes');
@@ -1459,6 +1500,40 @@ class AdminManager {
     if (Number.isFinite(data.pos_x)) payload.posicion_x = data.pos_x;
     if (Number.isFinite(data.pos_y)) payload.posicion_y = data.pos_y;
     await Socket.emitir('unidad:crear_en_ejercicio', payload);
+  }
+
+  /**
+   * `PUT /unidades/:id` escribe la base pero no el ejercicio en marcha
+   * (`frontend.md`, "Simetría con REST"): el cambio no llegaba al mapa. Si la
+   * unidad está viva, se repite por `unidad:modificar` lo que admite su lista
+   * blanca. Solo lo que el admin CAMBIÓ en el formulario: la posición viene
+   * precargada de la base y puede estar vieja respecto de la del motor —
+   * mandarla sin tocarla teletransportaría la unidad y cortaría su trayecto.
+   */
+  async propagarEdicionUnidad(id, data) {
+    const item = Store.obtener('unidad', id);
+    if (!item || !Store.iniciado || !Socket.conectado()) return;
+    const antes = this.data.unidades?.find((r) => String(r.id) === String(id)) || {};
+    const payload = { ejercicio_id: Store.ejercicioId, entidad_id: item.id };
+
+    if (data.nombre && data.nombre !== antes.nombre) payload.nombre = data.nombre;
+    const cambio = (campo) => Number.isFinite(data[campo]) && data[campo] !== Number(antes[campo]);
+    if (cambio('pos_x') || cambio('pos_y')) {
+      payload.posicion_x = Number.isFinite(data.pos_x) ? data.pos_x : Number(item.entidad.posicion_x);
+      payload.posicion_y = Number.isFinite(data.pos_y) ? data.pos_y : Number(item.entidad.posicion_y);
+    }
+    if (data.unidad_militar_base_id && String(data.unidad_militar_base_id) !== String(antes.unidad_militar_base_id)) {
+      const plantilla = (this.data.unidades_base || []).find((p) => String(p.id) === String(data.unidad_militar_base_id));
+      if (plantilla?.sidc) payload.sidc = Sidc.conBando(plantilla.sidc, item.entidad.bando);
+    }
+    if (Object.keys(payload).length <= 2) return;
+
+    try {
+      await Socket.emitir('unidad:modificar', payload);
+    } catch (e) {
+      // La base ya quedó bien; lo que falta es el mapa en vivo.
+      alert(`Se guardó en la base, pero no se pudo aplicar en el ejercicio en curso: ${e.message}`);
+    }
   }
 
   async updateRecord(table, id, data) {
@@ -1490,6 +1565,7 @@ class AdminManager {
         const error = await response.json();
         throw new Error(error.error || `Error ${response.status}`);
       }
+      if (table === 'unidades') await this.propagarEdicionUnidad(id, data);
       alert('Registro actualizado exitosamente');
     } catch (error) {
       alert(`Error al actualizar registro: ${error.message}`);
@@ -1567,36 +1643,18 @@ class AdminManager {
   }
 
   /**
-   * Saca del ejercicio en curso las unidades que se acaban de borrar de la base.
+   * Saca del mapa local las unidades que se acaban de borrar de la base.
    *
-   * ⚠️ El backend NO tiene un evento de baja de unidad: el socket expone
-   * `unidad:crear_en_ejercicio` y `unidad:modificar`, pero no un `eliminar`
-   * (ver la tabla de eventos en frontend.md, fase 8). Lo más cerca que se puede
-   * llegar sin tocar el backend es marcarla `visible: false`, que está en la
-   * lista blanca de `unidad:modificar`: deja de dibujarse, de detectar y de
-   * poder ser fijada como blanco en TODOS los clientes, y queda así en el
-   * próximo checkpoint. La fila ya no existe en la base, así que la próxima vez
-   * que el estado se genere desde la base la unidad no vuelve.
+   * `DELETE /unidades/:id` (y el de plantillas, que cascadea) ya da de baja la
+   * entidad en todo ejercicio en marcha y emite `ejercicio:unidad_eliminada`
+   * a todos los clientes (`frontend.md`, "Baja de entidades en caliente";
+   * lo escucha `direccion.js`). Acá solo se adelanta el mapa propio sin
+   * esperar el evento; `quitarUnidad` es idempotente, así que cuando llega
+   * no pasa nada. Antes se mandaba además `unidad:modificar visible:false`,
+   * de cuando el backend no tenía baja en caliente.
    */
   async bajaEnElEjercicio(items) {
-    if (!items.length) return;
-
-    for (const item of items) {
-      if (Socket.conectado()) {
-        try {
-          await Socket.emitir('unidad:modificar', {
-            ejercicio_id: Store.ejercicioId,
-            entidad_id: item.id,
-            visible: false,
-          });
-        } catch (e) {
-          // La unidad ya no está en la base: que el servidor rechace el
-          // modificar es esperable. El mapa local se corrige igual.
-          console.warn(`No se pudo avisar la baja de la unidad ${item.id}:`, e.message);
-        }
-      }
-      Store.quitarUnidad(item.id);   // dispara "estado" → el mapa se redibuja
-    }
+    for (const item of items) Store.quitarUnidad(item.id);   // dispara "estado" → el mapa se redibuja
   }
 
   getEndpoint(table, method = 'GET', id = null, extraData = null) {

@@ -1179,27 +1179,47 @@ function escucharEntidadesEnVivo() {
   const avisar = (entidad, texto) => {
     if (Session.esAdmin() || Store.esAliada(entidad)) toast(texto);
   };
+  // Administración y los catálogos cachean listas de unidades/vehículos:
+  // que se enteren sin conocer este módulo (mismo patrón que
+  // `simtac:geoserver-cambiado`).
+  const catalogoCambio = (tipo) =>
+    window.dispatchEvent(new CustomEvent('simtac:entidades-cambiadas', { detail: { tipo } }));
 
   Socket.on('ejercicio:unidad_creada', ({ unidad }) => {
     const item = Store.agregarUnidad(unidad);
     avisar(item?.entidad ?? unidad, `Unidad "${unidad.nombre}" agregada al ejercicio`);
+    catalogoCambio('unidad');
   });
 
   Socket.on('ejercicio:vehiculo_creado', ({ vehiculo }) => {
     const item = Store.agregarVehiculo(vehiculo);
     avisar(item?.entidad ?? vehiculo, `Vehículo "${vehiculo.nombre || vehiculo.id}" agregado al ejercicio`);
+    catalogoCambio('vehiculo');
   });
 
   Socket.on('ejercicio:unidad_modificada', (payload) => {
-    if (payload.unidad) {
-      Store.agregarUnidad(payload.unidad);
-      return;
-    }
-    Store.aplicarCampos('unidad', payload.entidad_id, camposModificados(payload, CAMPOS_UNIDAD));
+    if (payload.unidad) Store.agregarUnidad(payload.unidad);
+    else Store.aplicarCampos('unidad', payload.entidad_id, camposModificados(payload, CAMPOS_UNIDAD));
+    catalogoCambio('unidad');
   });
 
   Socket.on('ejercicio:vehiculo_modificado', (payload) => {
     Store.aplicarCampos('vehiculo', payload.entidad_id, camposModificados(payload, CAMPOS_VEHICULO));
+    catalogoCambio('vehiculo');
+  });
+
+  // Bajas: las emite el servidor tanto por `*:eliminar_del_ejercicio` como
+  // por `DELETE /unidades|vehiculos/:id` (`frontend.md`, "Baja de entidades en
+  // caliente"). Una unidad se lleva sus vehículos anidados.
+  Socket.on('ejercicio:unidad_eliminada', ({ entidad_id, vehiculos_eliminados }) => {
+    Store.quitarUnidad(entidad_id);
+    for (const id of vehiculos_eliminados || []) Store.quitarVehiculo(id);
+    catalogoCambio('unidad');
+  });
+
+  Socket.on('ejercicio:vehiculo_eliminado', ({ entidad_id }) => {
+    Store.quitarVehiculo(entidad_id);
+    catalogoCambio('vehiculo');
   });
 }
 

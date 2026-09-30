@@ -566,6 +566,26 @@ const Store = {
     this.estado.vehiculos = (this.estado.vehiculos || [])
       .filter((v) => !dadaDeBaja.has(clave('vehiculo', v.id)));
 
+    return this.limpiarBajas(dadaDeBaja);
+  },
+
+  /**
+   * Saca un vehículo del estado, esté suelto en la raíz o anidado en una
+   * unidad (`ejercicio:vehiculo_eliminado`). Devuelve las claves dadas de baja.
+   */
+  quitarVehiculo(id) {
+    const item = this.obtener('vehiculo', id);
+    if (!item) return [];
+    const esEste = (v) => Number(v.id) === Number(id);
+    this.estado.vehiculos = (this.estado.vehiculos || []).filter((v) => !esEste(v));
+    for (const unidad of this.estado.unidades || []) {
+      if (Array.isArray(unidad.vehiculos)) unidad.vehiculos = unidad.vehiculos.filter((v) => !esEste(v));
+    }
+    return this.limpiarBajas(new Set([item.clave]));
+  },
+
+  /** Detecciones, combates y selección de lo que se dio de baja; reindexa y avisa. */
+  limpiarBajas(dadaDeBaja) {
     for (const k of dadaDeBaja) {
       this.observadores.delete(k);
       this.detecciones.delete(k);
@@ -586,7 +606,7 @@ const Store = {
 
     this.reindexar();
     emitir('estado', this.estado);
-    return bajas;
+    return [...dadaDeBaja];
   },
 
   setEstadoEjercicio(nuevoEstado) {
