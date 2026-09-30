@@ -22,7 +22,9 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { estamparVersion } from './version.mjs';
-import { artefactos, leerArgumentos, manifiesto, subirVersion } from './subir.mjs';
+import {
+  artefactos, backendDelDespliegue, backendDelUsuario, leerArgumentos, manifiesto, subirVersion,
+} from './subir.mjs';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const TAURI = path.join(RAIZ, 'src-tauri');
@@ -34,6 +36,16 @@ if (!process.env.TAURI_SIGNING_PRIVATE_KEY && !existsSync(clave)) {
   console.error(`[compilar] Falta la clave privada de firma: ${clave}\n` +
     '           Sin ella no se puede firmar la actualización y los clientes la rechazarían.');
   process.exit(1);
+}
+
+// El instalador lleva `src/config.json` adentro: si un administrador cambió la
+// IP desde la app en esta máquina y el repo no, las instalaciones nuevas
+// arrancarían apuntando al servidor viejo.
+const backendUsuario = backendDelUsuario();
+if (backendUsuario && backendUsuario !== backendDelDespliegue()) {
+  console.warn(`[compilar] ⚠ Esta máquina usa el backend ${backendUsuario} (fijado desde la app),\n` +
+    `           pero el instalador va a llevar ${backendDelDespliegue()} (src/config.json).\n` +
+    '           Si el servidor cambió de IP, actualizar src/config.json antes de publicar.');
 }
 
 const ahora = new Date();

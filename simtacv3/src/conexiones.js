@@ -78,12 +78,22 @@ const Conexiones = {
     });
 
     // El backend solo se guarda: reapuntarlo en caliente dejaría el socket vivo
-    // contra el servidor anterior y la sesión emitida por otro.
+    // contra el servidor anterior y la sesión emitida por otro. Lo que vivía en
+    // su mismo host (GeoServer, actualizaciones) lo sigue; la cartografía sí se
+    // reapunta ya, porque no depende de la sesión.
     this.el('conexiones-backend-aplicar')?.addEventListener('click', () => {
       try {
-        const url = Config.fijar('backend', this.el('conexiones-backend').value);
+        const { url, arrastrados } = Config.fijarBackend(this.el('conexiones-backend').value);
+        if (arrastrados.some((a) => a.clave === 'geoserver')) {
+          Mapa.reapuntarGeoserver(Config.geoserver());
+          avisarCambioGeoserver();
+        }
         this.pintar();
-        this.pintarEstado(`Backend guardado: ${url}. Se aplica al reiniciar la aplicación.`, 'ok');
+        const tambien = arrastrados.map((a) => `${a.clave} → ${a.ahora}`).join(' · ');
+        this.pintarEstado(
+          `Backend guardado: ${url}. Se aplica al reiniciar la aplicación.${tambien ? ` También: ${tambien}.` : ''}`,
+          'ok',
+        );
       } catch (error) {
         this.pintarEstado(error.message, 'error');
       }

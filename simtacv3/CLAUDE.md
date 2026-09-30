@@ -75,16 +75,21 @@ npm run subir -- --registrar-host                             # fijar la clave d
 - `scripts/subir.mjs` usa `sftp -b` (OpenSSH): `.part` + `rename` para los
   archivos, y `latest.json.part` → `rename` (atómico) para publicar.
 - Destino en `config/actualizaciones-ssh.json` (sin secretos; host vacío = el
-  del backend de `src/config.json`). Clave privada en
+  del backend que fijó un administrador en esta máquina —`config.json` de
+  `%APPDATA%/com.agrey.simtacv3/`— y si no hay, el de `src/config.json`). Si
+  esos dos difieren, `npm run compilar` avisa: el instalador lleva
+  `src/config.json` y las instalaciones nuevas apuntarían a la IP vieja. Clave privada en
   `~/.ssh/simtac_publicador`, **nunca en el repo**. Solo clave, sin
   contraseña (`BatchMode=yes`).
 - La clave del **host** se fija en `config/actualizaciones_known_hosts`
   (`StrictHostKeyChecking=yes`): si cambia, el script se niega a subir.
   Registrarla solo después de comparar la huella con la que informe el backend.
-  **Ya registrada** (2026-09-30) para `10.40.0.6` (antes `.19`, misma clave): ED25519
+  **Ya registrada** (2026-09-30): ED25519
   `SHA256:RykzfYnfNfwJ/Vul8n/t0ZcEDL0YksuU8iHU+NCvLvU`, la misma que informó
-  el backend y la que devuelve el servidor en vivo. Si la IP del backend
-  cambia, hay que volver a registrar (la línea va atada a la IP).
+  el backend y la que devuelve el servidor en vivo (en `.19` y en `.6`). Se
+  guarda bajo el alias `simtac-actualizaciones` (`HostKeyAlias`), no bajo la
+  IP: si el servidor cambia de IP no hay que volver a registrarla, y una clave
+  distinta se sigue rechazando.
 - Servidor real (`RESPUESTA_PEDIDO_SERVIDOR_ACTUALIZACIONES.md`): Mac mini con
   Docker Desktop, SFTP en un contenedor propio (solo clave pública, sin shell,
   enjaulado en `/actualizaciones`; borrar está permitido para limpiar versiones
@@ -262,6 +267,14 @@ actualizado. Por eso **nunca hay que copiarla a una constante local** ni leerla
 en el cuerpo de un módulo — solo dentro de funciones. Cambiar el backend desde
 el panel solo guarda: se aplica al reiniciar, porque reapuntarlo en caliente
 dejaría el socket vivo contra el servidor anterior.
+
+**Cambio de IP del backend (`Config.fijarBackend`)** — lo usan Conexiones y
+⚙ Servidor del login. El GeoServer y el manifiesto de actualizaciones viven
+en la misma máquina: si apuntaban al host del backend anterior, pasan al host
+nuevo conservando puerto y ruta (el mapa se reapunta en el acto); si apuntaban
+a otra máquina, se dejan. El config del usuario guarda **solo** lo que se
+eligió ahí: antes se guardaban todos los valores vigentes y el GeoServer quedaba
+clavado a la IP vieja aunque viniera del despliegue.
 
 `node pruebas/config.mjs` verifica la precedencia y la validación sin navegador
 ni servidores (11 casos).

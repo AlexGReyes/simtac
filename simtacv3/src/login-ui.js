@@ -66,7 +66,9 @@ const LoginUI = {
     const aplicar = async () => {
       let url;
       try {
-        url = Config.fijar('backend', input.value);
+        // Arrastra el GeoServer y las actualizaciones si vivían en el mismo
+        // host: el mapa todavía no existe, se crea al entrar con estos valores.
+        ({ url } = Config.fijarBackend(input.value));
       } catch (error) {
         pintarEstado(error.message, 'error');
         return;

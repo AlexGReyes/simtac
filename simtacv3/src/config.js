@@ -22,8 +22,8 @@
 
 /** Valores de último recurso: el despliegue original, todo en la misma máquina. */
 export const DEFECTOS = {
-  backend: 'http://10.40.0.21',
-  geoserver: 'http://10.40.0.21:3001/geoserver',
+  backend: 'http://10.40.0.6',
+  geoserver: 'http://10.40.0.6:3001/geoserver',
 };
 
 /**
@@ -247,11 +247,56 @@ export function fijar(clave, valor) {
   return normalizado;
 }
 
+/** `http://a:3001/geoserver` con el host de `nuevo` → `http://b:3001/geoserver`. */
+function conHost(url, nuevo) {
+  const u = new URL(url);
+  u.hostname = new URL(nuevo).hostname;
+  return (u.origin + u.pathname).replace(/\/+$/, '');
+}
+
+/**
+ * Cambia el backend y arrastra lo que depende de él. El GeoServer y el
+ * servidor de actualizaciones viven en la misma máquina que el backend (otro
+ * puerto u otra ruta): si apuntaban al host del backend anterior, pasan al
+ * host nuevo conservando puerto y ruta. Si apuntaban a otra máquina, se dejan.
+ * El manifiesto que nadie fijó ya sigue al backend solo (se deriva de él).
+ *
+ * Devuelve `{ url, arrastrados: [{ clave, antes, ahora }] }`; lanza si la URL
+ * no pasa la validación (y entonces no cambia nada).
+ */
+export function fijarBackend(valor) {
+  const url = VALIDADORES.backend(valor);
+  const hostAnterior = new URL(valores.backend).hostname;
+  const arrastrados = [];
+
+  for (const clave of ['geoserver', 'actualizaciones']) {
+    const antes = valores[clave];
+    let ahora = antes;
+    if (clave === 'actualizaciones' && origenes.actualizaciones !== 'config del usuario') {
+      ahora = `${url}${RUTA_ACTUALIZACIONES}`;
+    } else if (new URL(antes).hostname === hostAnterior) {
+      ahora = VALIDADORES[clave](conHost(antes, url));
+      origenes[clave] = 'config del usuario';
+    }
+    if (ahora !== antes) {
+      valores[clave] = ahora;
+      arrastrados.push({ clave, antes, ahora });
+    }
+  }
+
+  valores.backend = url;
+  origenes.backend = 'config del usuario';
+  persistir();
+  return { url, arrastrados };
+}
+
 function persistir() {
-  // `actualizaciones` solo se fija si el usuario la eligió: si no, quedaría
-  // clavada al backend de hoy y dejaría de seguirlo cuando cambie de IP.
-  const aGuardar = { ...valores };
-  if (origenes.actualizaciones !== 'config del usuario') delete aGuardar.actualizaciones;
+  // Solo lo que eligió el usuario. Guardar todo dejaba el GeoServer (o el
+  // manifiesto) clavado al servidor de hoy aunque viniera del despliegue: al
+  // cambiar la IP del backend, el mapa se quedaba en la IP vieja.
+  const aGuardar = Object.fromEntries(
+    CLAVES.filter((c) => origenes[c] === 'config del usuario').map((c) => [c, valores[c]]),
+  );
   const datos = JSON.stringify(aGuardar, null, 2);
   invocar('guardar_config', { datos }).catch(() => {
     try {
@@ -292,5 +337,6 @@ export default {
   rutaConfigUsuario,
   estaCargado,
   fijar,
+  fijarBackend,
   restablecer,
 };

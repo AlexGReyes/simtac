@@ -71,7 +71,7 @@ await corre('valor invalido degrada al siguiente nivel',
 
 await corre('sin config.json quedan los valores por defecto',
   { despliegue: false },
-  { geoserver: 'http://10.40.0.21:3001/geoserver', backend: 'http://10.40.0.21',
+  { geoserver: 'http://10.40.0.6:3001/geoserver', backend: 'http://10.40.0.6',
     origenGeo: 'valor por defecto' });
 
 await corre('actualizaciones sigue al backend si nadie la fijó',
@@ -81,6 +81,50 @@ await corre('actualizaciones sigue al backend si nadie la fijó',
 await corre('actualizaciones del config del usuario gana sobre el derivado',
   { usuario: { actualizaciones: 'http://repo.local/simtac/latest.json' } },
   { actualizaciones: 'http://repo.local/simtac/latest.json', origenAct: 'config del usuario' });
+
+
+// Cambio de IP del backend por un administrador (`fijarBackend`): lo que vive
+// en el mismo host lo sigue, lo que vive en otro se deja, y solo se guarda lo
+// que eligió el usuario.
+async function cambioDeBackend(nombre, escenario, nuevo, esperado) {
+  stub(escenario);
+  const mod = await import(`../src/config.js?v=${Math.random()}`);
+  await mod.cargar();
+  const { arrastrados } = mod.fijarBackend(nuevo);
+  await new Promise((r) => setTimeout(r, 0)); // persistir() degrada a localStorage en un then
+  const guardado = JSON.parse(window.localStorage.getItem('simtac:config') || '{}');
+  const real = { backend: mod.backend(), geoserver: mod.geoserver(), actualizaciones: mod.actualizaciones(),
+                 arrastrados: arrastrados.map((a) => a.clave).join(','), guardado: Object.keys(guardado).sort().join(',') };
+  const ok = Object.entries(esperado).every(([k, v]) => real[k] === v);
+  casos.push(ok);
+  console.log(`${ok ? 'OK  ' : 'FALLA'} ${nombre}`);
+  if (!ok) console.log('   esperado:', esperado, '\n   real:', real);
+}
+
+await cambioDeBackend('cambiar el backend arrastra el GeoServer del mismo host', {},
+  'http://10.40.0.99',
+  { backend: 'http://10.40.0.99', geoserver: 'http://10.40.0.99:3001/geoserver',
+    actualizaciones: 'http://10.40.0.99/actualizaciones/latest.json',
+    arrastrados: 'geoserver,actualizaciones', guardado: 'backend,geoserver' });
+
+await cambioDeBackend('un GeoServer elegido en otra máquina se conserva',
+  { usuario: { geoserver: 'http://10.9.9.9:3001/geoserver' } }, 'http://10.40.0.99',
+  { geoserver: 'http://10.9.9.9:3001/geoserver', arrastrados: 'actualizaciones', guardado: 'backend,geoserver' });
+
+await cambioDeBackend('un GeoServer del despliegue en otro host no queda clavado en el config',
+  { query: '?geoserver=http://10.9.9.9:3001/geoserver' }, 'http://10.40.0.99',
+  { geoserver: 'http://10.9.9.9:3001/geoserver', guardado: 'backend' });
+
+await cambioDeBackend('actualizaciones fijada en el mismo host se mueve y conserva la ruta',
+  { usuario: { actualizaciones: `${DESPLIEGUE.backend}/otra/latest.json` } }, 'http://10.40.0.99',
+  { actualizaciones: 'http://10.40.0.99/otra/latest.json', guardado: 'actualizaciones,backend,geoserver' });
+
+await cambioDeBackend('URL inválida no cambia nada',
+  {}, 'ftp://x',
+  { backend: DESPLIEGUE.backend }).catch(() => {
+    casos.push(true);
+    console.log('OK   URL inválida lanza y no cambia nada');
+  });
 
 console.warn = warn;
 

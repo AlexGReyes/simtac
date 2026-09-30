@@ -29,8 +29,8 @@
     "     escribe Administración → Conexiones y el que se puede editar en una",
     "     máquina ya instalada (esa sección muestra su ruta exacta)",
     "  3. ESTE archivo, que viaja con la app",
-    "  4. los valores por defecto (http://10.40.0.21 y",
-    "     http://10.40.0.21:3001/geoserver)",
+    "  4. los valores por defecto (http://10.40.0.6 y",
+    "     http://10.40.0.6:3001/geoserver)",
     "",
     "Si un valor está mal escrito se descarta con un aviso en la consola y se usa",
     "el de abajo, así que un error acá no deja la app sin backend ni sin mapa."

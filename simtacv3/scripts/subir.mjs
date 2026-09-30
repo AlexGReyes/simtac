@@ -25,6 +25,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const RAIZ = fileURLToPath(new URL('..', import.meta.url));
 const TAURI = path.join(RAIZ, 'src-tauri');
+const IDENTIFICADOR = JSON.parse(readFileSync(path.join(TAURI, 'tauri.conf.json'), 'utf8')).identifier;
+
+/**
+ * Nombre con que se guarda la clave del host en `known_hosts`, en vez de la IP.
+ * La clave identifica al SERVIDOR, no a su dirección: si el backend cambia de
+ * IP, la clave fijada sigue valiendo y se sigue exigiendo que coincida.
+ */
+export const ALIAS_HOST = 'simtac-actualizaciones';
 
 /** Marcador que el nginx del servidor reemplaza por el origen de cada request (§1.3). */
 export const MARCADOR_BASE = '__SIMTAC_BASE__';
@@ -76,11 +84,31 @@ function expandir(ruta) {
   return ruta.startsWith('~') ? path.join(homedir(), ruta.slice(1)) : path.resolve(RAIZ, ruta);
 }
 
+/**
+ * Backend que fijó un administrador en ESTA máquina (Administración →
+ * Conexiones o ⚙ Servidor del login), del `config.json` del directorio de la
+ * app. Gana sobre `src/config.json`: si cambió la IP desde la app, se publica
+ * a la IP nueva sin tener que editar el repo.
+ */
+export function backendDelUsuario() {
+  const base = process.env.APPDATA || path.join(homedir(), '.config');
+  try {
+    const usuario = JSON.parse(readFileSync(path.join(base, IDENTIFICADOR, 'config.json'), 'utf8'));
+    return usuario.backend ? new URL(usuario.backend).href.replace(/\/+$/, '') : null;
+  } catch {
+    return null; // sin archivo, JSON roto o URL inválida: se sigue con el despliegue
+  }
+}
+
+export function backendDelDespliegue() {
+  return JSON.parse(readFileSync(path.join(RAIZ, 'src', 'config.json'), 'utf8')).backend.replace(/\/+$/, '');
+}
+
 export function destinoSsh({ servidor = null } = {}) {
   const archivo = JSON.parse(readFileSync(path.join(RAIZ, 'config', 'actualizaciones-ssh.json'), 'utf8'));
-  const despliegue = JSON.parse(readFileSync(path.join(RAIZ, 'src', 'config.json'), 'utf8'));
   const e = process.env;
-  const host = servidor || e.SIMTAC_SSH_HOST || archivo.host || new URL(despliegue.backend).hostname;
+  const host = servidor || e.SIMTAC_SSH_HOST || archivo.host
+    || new URL(backendDelUsuario() || backendDelDespliegue()).hostname;
   return {
     host,
     puerto: Number(e.SIMTAC_SSH_PUERTO || archivo.puerto || 22),
@@ -98,6 +126,7 @@ function opcionesSsh(d) {
     '-o', 'BatchMode=yes',                       // nunca pedir contraseña: solo clave
     '-o', 'StrictHostKeyChecking=yes',           // host no registrado = no se sube
     '-o', `UserKnownHostsFile=${d.knownHosts}`,
+    '-o', `HostKeyAlias=${ALIAS_HOST}`,
     '-o', 'ConnectTimeout=15',
   ];
 }
@@ -193,7 +222,9 @@ export async function subirVersion({ semver, notas = null, publicar = false, ser
 export async function registrarHost({ servidor = null } = {}) {
   const d = destinoSsh({ servidor });
   const scan = spawnSync('ssh-keyscan', ['-p', String(d.puerto), '-t', 'ed25519', d.host], { encoding: 'utf8' });
-  const linea = (scan.stdout || '').split('\n').find((l) => l.trim() && !l.startsWith('#'));
+  const escaneada = (scan.stdout || '').split('\n').find((l) => l.trim() && !l.startsWith('#'));
+  // Se guarda bajo el alias, no bajo la IP (ver ALIAS_HOST).
+  const linea = escaneada ? escaneada.replace(/^\S+/, ALIAS_HOST).trim() : null;
   if (!linea) throw new Error(`ssh-keyscan no obtuvo clave de ${d.host}:${d.puerto}\n${scan.stderr || ''}`);
 
   const dir = mkdtempSync(path.join(tmpdir(), 'simtac-kh-'));
