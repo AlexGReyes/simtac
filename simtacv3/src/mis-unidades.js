@@ -7,6 +7,7 @@
 // el resto del frontend) y `Mapa.centrarEn()` (mismo camino que el botón
 // "Centrar" del panel de entidad).
 
+import Api from './api.js';
 import Store from './store.js';
 import Mapa, { estadoVisual } from './mapa.js';
 import { esc } from './ui.js';
@@ -33,10 +34,42 @@ function crearModal() {
   return modal;
 }
 
+/**
+ * Ids de `GET /unidades/mias`: la respuesta del servidor sobre qué comanda el
+ * usuario, independiente de los campos de control que traiga el estado del
+ * ejercicio. Trae unidades de todos los ejercicios; se cruza con el Store.
+ */
+let idsDelServidor = new Set();
+
+async function consultarServidor() {
+  try {
+    const respuesta = await Api.unidades.mias();
+    const lista = Array.isArray(respuesta) ? respuesta : (respuesta?.unidades || respuesta?.data || []);
+    idsDelServidor = new Set(lista.map((u) => Number(u.id ?? u.unidad_militar_id)).filter(Number.isFinite));
+    const faltan = [...idsDelServidor].filter((id) => Store.obtener('unidad', id) && !Store.controlo(Store.obtener('unidad', id)));
+    if (faltan.length) {
+      console.warn('[mis-unidades] /unidades/mias trae unidades que el estado del ejercicio no marca como propias ' +
+        '(sin usuarios_ids/unidades_ids para este usuario):', faltan);
+    }
+    render();
+  } catch (error) {
+    console.warn('[mis-unidades] no se pudo consultar /unidades/mias:', error);
+  }
+}
+
+function propias() {
+  const salida = Store.mias();
+  for (const id of idsDelServidor) {
+    const item = Store.obtener('unidad', id);
+    if (item) salida.push(item);
+  }
+  return salida;
+}
+
 /** Incluye cada unidad con sus vehículos anidados, igual que hace logistica.js. */
 function todasLasFilas() {
   const salida = [];
-  for (const item of Store.mias()) {
+  for (const item of propias()) {
     salida.push(item);
     if (item.tipo === 'unidad') {
       for (const v of item.entidad.vehiculos || []) {
@@ -94,6 +127,7 @@ export function abrir() {
   crearModal();
   modal.classList.add('active');
   render();
+  consultarServidor();
 }
 
 export function cerrar() {

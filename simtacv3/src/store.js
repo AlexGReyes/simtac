@@ -347,6 +347,14 @@ const Store = {
       const padre = this.entidad('unidad', unidadPadreId);
       if (Array.isArray(padre?.usuarios_ids) && padre.usuarios_ids.includes(miId)) return true;
     }
+    // Segunda fuente del mismo estado: `jugadores[].unidades_ids`. Si el
+    // backend manda la unidad sin `usuarios_ids` (o vacío), sin esto el
+    // jugador no "controla" nada y Mis unidades / Logística quedan vacíos.
+    const unidadId = item.tipo === 'unidad' ? item.id : unidadPadreId;
+    if (unidadId !== null && unidadId !== undefined) {
+      const yo = (this.estado.jugadores || []).find((j) => Number(j.id) === miId);
+      if (Array.isArray(yo?.unidades_ids) && yo.unidades_ids.includes(Number(unidadId))) return true;
+    }
     return false;
   },
 
