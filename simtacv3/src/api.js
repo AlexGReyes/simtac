@@ -271,7 +271,9 @@ const Api = {
 
   // --- Unidades (instancias) ----------------------------------------------
   unidades: {
-    listar: () => get('/unidades'),
+    // Con `ejercicioId` el servidor cruza controladores × participantes y
+    // agrega `bando` (frontend.md, fase 2).
+    listar: (ejercicioId = null) => get(ejercicioId ? `/unidades?ejercicioId=${encodeURIComponent(ejercicioId)}` : '/unidades'),
     mias: () => get('/unidades/mias'),
     obtener: (id) => get(`/unidades/${id}`),
     crear: (cuerpo) => post('/unidades', cuerpo),

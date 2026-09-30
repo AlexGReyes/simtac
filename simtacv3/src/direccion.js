@@ -195,6 +195,7 @@ function renderControl(cuerpo) {
       Pausar y detener cortan movimiento y combate. El chat, los documentos y los
       boletines siguen funcionando con el ejercicio pausado.
     </div>
+    <div id="pd-fuera-del-ejercicio"></div>
     <div class="pd-subtitulo">Hora táctica</div>
     <div class="pd-info">Actual: ${fechaHora(ejercicio?.hora_tactica)}</div>
     <div class="pd-fila-inline">
@@ -231,6 +232,82 @@ function renderControl(cuerpo) {
   document.getElementById('pd-abrir-hora-tactica')?.addEventListener('click', abrirModalHoraTactica);
 
   cargarEjerciciosSelector();
+  if (estado) revisarUnidadesFueraDelEjercicio();
+}
+
+/**
+ * Unidades que están en la base para este ejercicio (sus controladores
+ * participan) pero no en el ejercicio en marcha: las creadas por
+ * `POST /unidades` con el ejercicio corriendo, antes de que Administración
+ * las mandara por socket. El motor solo relee la base al REANUDAR
+ * (`estadoInicialService.reconciliarCatalogo`, backend.md punto 11b: suma lo
+ * que falta sin tocar posiciones ni progreso de lo que ya está), así que para
+ * incorporarlas alcanza con pausar y reanudar.
+ */
+let unidadesEnLaBase = { ejercicioId: null, cuando: 0, lista: [] };
+
+async function revisarUnidadesFueraDelEjercicio({ forzar = false } = {}) {
+  const cont = document.getElementById('pd-fuera-del-ejercicio');
+  if (!cont || !Store.ejercicioId) return;
+  let faltan;
+  try {
+    // El panel se redibuja con cada `estado`: la base se consulta como mucho
+    // cada 10 s; la comparación contra el Store sí es siempre al día.
+    const vieja = unidadesEnLaBase.ejercicioId !== Store.ejercicioId || Date.now() - unidadesEnLaBase.cuando > 10000;
+    if (forzar || vieja) {
+      const lista = await Api.unidades.listar(Store.ejercicioId);
+      unidadesEnLaBase = { ejercicioId: Store.ejercicioId, cuando: Date.now(), lista: Array.isArray(lista) ? lista : [] };
+    }
+    faltan = unidadesEnLaBase.lista.filter((u) => !Store.obtener('unidad', u.id));
+  } catch (e) {
+    console.warn('[direccion] no se pudo comparar la base con el ejercicio en marcha:', e.message);
+    return;
+  }
+  if (!document.body.contains(cont)) return; // el panel se redibujó mientras tanto
+  if (!faltan.length) {
+    cont.innerHTML = '';
+    return;
+  }
+  cont.innerHTML = `
+    <div class="pd-nota pd-nota-preparacion">
+      <strong>${faltan.length} unidad(es) creada(s) no están en el mapa:</strong>
+      ${faltan.map((u) => esc(u.nombre || `#${u.id}`)).join(', ')}.
+      Están en la base pero el ejercicio en marcha no las conoce. Para
+      incorporarlas hay que pausar y reanudar: se suman sin mover las demás,
+      pero se cortan los movimientos y combates en curso.
+    </div>
+    <button class="pd-btn pd-btn-ok" id="pd-incorporar">⟳ Incorporar al ejercicio</button>
+  `;
+  document.getElementById('pd-incorporar').addEventListener('click', () => incorporarAlEjercicio(faltan));
+}
+
+async function incorporarAlEjercicio(faltan) {
+  const ok = await confirmar(
+    `Se va a pausar y reanudar el ejercicio para sumar ${faltan.length} unidad(es). ` +
+    'Los movimientos y combates en curso se cortan. ¿Continuar?',
+  );
+  if (!ok) return;
+  const ejercicio_id = Store.ejercicioId;
+  try {
+    if (Store.estadoEjercicio() === 'activo') await Socket.emitir('ejercicio:pausar', { ejercicio_id });
+    const respuesta = await Socket.emitir('ejercicio:iniciar', { ejercicio_id });
+    if (respuesta.estado) Store.setEstadoEjercicio(respuesta.estado);
+  } catch (e) {
+    toastError(e.message);
+    return;
+  }
+  // El estado reconciliado llega por `ejercicio:estado_inicial`: se da un
+  // momento y se vuelve a comparar para confirmarlo.
+  setTimeout(async () => {
+    const siguen = faltan.filter((u) => !Store.obtener('unidad', u.id));
+    if (siguen.length) {
+      toastAviso(`${siguen.length} unidad(es) siguen sin aparecer. Probá ⏹ DETENER y ▶ INICIAR, ` +
+        'que es la vía que verificó el backend.');
+    } else {
+      toastExito(`${faltan.length} unidad(es) incorporada(s) al ejercicio`);
+    }
+    if (seccion === 'control') renderSeccion();
+  }, 2500);
 }
 
 async function cargarEjerciciosSelector() {
