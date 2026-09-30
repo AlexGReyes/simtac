@@ -544,17 +544,58 @@ const Boletines = {
     if (!cont) return;
     const boletines = (Store.estado.boletines || []).slice().reverse();
 
+    // Los expandidos sobreviven al redibujado (llega un boletín nuevo y la
+    // lista se rearma): se recuerdan por índice en `Store.estado.boletines`,
+    // que solo crece.
+    this.expandidos = this.expandidos || new Set();
+
     cont.innerHTML = boletines.length
-      ? boletines.map((b, indiceInvertido) => `
-          <div class="boletin-item">
+      ? boletines.map((b, indiceInvertido) => {
+        const indice = boletines.length - 1 - indiceInvertido;
+        const abierto = this.expandidos.has(indice);
+        return `
+          <div class="boletin-item ${abierto ? 'expandido' : ''}" data-boletin="${indice}">
             <div class="boletin-item-cabecera">
               <span class="boletin-item-fecha">${fechaHora(b.timestamp)}</span>
-              <button class="boletin-item-reproducir" data-indice="${boletines.length - 1 - indiceInvertido}" title="Reproducir">▶ Reproducir</button>
+              <button class="boletin-item-reproducir" data-indice="${indice}" title="Reproducir">▶ Reproducir</button>
             </div>
             <div class="boletin-item-texto">${esc(b.texto || '')}</div>
+            <div class="boletin-item-mas" aria-hidden="true">${abierto ? 'Ver menos ▴' : 'Ver más ▾'}</div>
           </div>
-        `).join('')
+        `;
+      }).join('')
       : '<div class="docs-vacio">Sin boletines</div>';
+
+    // Altura estándar: el texto se recorta en CSS y solo los que de verdad
+    // no entran se vuelven expandibles (hay que medir ya pintados).
+    cont.querySelectorAll('[data-boletin]').forEach((item) => {
+      const indice = Number(item.dataset.boletin);
+      const texto = item.querySelector('.boletin-item-texto');
+      const expandible = this.expandidos.has(indice) || texto.scrollHeight > texto.clientHeight + 1;
+      if (!expandible) return;
+      item.classList.add('expandible');
+      item.tabIndex = 0;
+      item.setAttribute('role', 'button');
+      item.setAttribute('aria-expanded', String(this.expandidos.has(indice)));
+      const alternar = () => {
+        const abrir = !this.expandidos.has(indice);
+        if (abrir) this.expandidos.add(indice);
+        else this.expandidos.delete(indice);
+        item.classList.toggle('expandido', abrir);
+        item.setAttribute('aria-expanded', String(abrir));
+        item.querySelector('.boletin-item-mas').textContent = abrir ? 'Ver menos ▴' : 'Ver más ▾';
+      };
+      item.addEventListener('click', (evento) => {
+        if (evento.target.closest('button')) return; // ▶ Reproducir no expande
+        if (window.getSelection()?.toString()) return; // seleccionando texto para copiarlo
+        alternar();
+      });
+      item.addEventListener('keydown', (evento) => {
+        if (evento.target !== item || (evento.key !== 'Enter' && evento.key !== ' ')) return;
+        evento.preventDefault();
+        alternar();
+      });
+    });
 
     cont.querySelectorAll('[data-indice]').forEach((boton) => {
       boton.addEventListener('click', () => {

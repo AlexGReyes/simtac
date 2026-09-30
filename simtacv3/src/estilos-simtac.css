@@ -1003,7 +1003,23 @@
   border-radius: 4px; padding: 3px 10px; font-size: 10px; cursor: pointer; white-space: nowrap;
 }
 .boletin-item-reproducir:hover { background: rgba(var(--sim-oro-rgb), 0.28); }
-.boletin-item-texto { font-size: 13px; line-height: 1.5; margin-top: 6px; white-space: pre-wrap; }
+/* Altura estándar: 4 líneas. Los que no entran se funden abajo y se
+   expanden con un clic (comunicaciones.js → renderLista). */
+.boletin-item-texto {
+  font-size: 13px; line-height: 1.5; margin-top: 6px; white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: calc(1.5em * 4); overflow: hidden;
+}
+.boletin-item.expandible { cursor: pointer; }
+.boletin-item.expandible:hover { background: rgba(var(--sim-blanco-rgb), 0.07); }
+.boletin-item.expandible:focus-visible { outline: 1px solid var(--sim-oro); outline-offset: 2px; }
+.boletin-item.expandible:not(.expandido) .boletin-item-texto {
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+.boletin-item.expandido .boletin-item-texto { max-height: none; }
+.boletin-item-mas { display: none; margin-top: 4px; font-size: 10px; color: var(--sim-oro); text-transform: uppercase; letter-spacing: 0.5px; }
+.boletin-item.expandible .boletin-item-mas { display: block; }
 
 /* ===================== Fase 8 · Panel de dirección ===================== */
 
