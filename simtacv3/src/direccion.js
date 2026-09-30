@@ -1167,7 +1167,44 @@ function mostrarBannerReplay() {
 // Inicialización
 // ---------------------------------------------------------------------------
 
+/**
+ * Altas y ediciones en caliente. Van a la room `ejercicio_{id}` completa
+ * (`frontend.md`, tabla de eventos) y las necesitan TODOS los clientes, no
+ * solo el administrador: antes vivían debajo del `esAdmin()` de `init()` y
+ * una unidad agregada con el ejercicio en marcha no aparecía en el mapa de
+ * ningún jugador. La niebla de guerra la sigue decidiendo el mapa
+ * (`Store.visibleParaMi`); el aviso se muestra solo si no delata al enemigo.
+ */
+function escucharEntidadesEnVivo() {
+  const avisar = (entidad, texto) => {
+    if (Session.esAdmin() || Store.esAliada(entidad)) toast(texto);
+  };
+
+  Socket.on('ejercicio:unidad_creada', ({ unidad }) => {
+    const item = Store.agregarUnidad(unidad);
+    avisar(item?.entidad ?? unidad, `Unidad "${unidad.nombre}" agregada al ejercicio`);
+  });
+
+  Socket.on('ejercicio:vehiculo_creado', ({ vehiculo }) => {
+    const item = Store.agregarVehiculo(vehiculo);
+    avisar(item?.entidad ?? vehiculo, `Vehículo "${vehiculo.nombre || vehiculo.id}" agregado al ejercicio`);
+  });
+
+  Socket.on('ejercicio:unidad_modificada', (payload) => {
+    if (payload.unidad) {
+      Store.agregarUnidad(payload.unidad);
+      return;
+    }
+    Store.aplicarCampos('unidad', payload.entidad_id, camposModificados(payload, CAMPOS_UNIDAD));
+  });
+
+  Socket.on('ejercicio:vehiculo_modificado', (payload) => {
+    Store.aplicarCampos('vehiculo', payload.entidad_id, camposModificados(payload, CAMPOS_VEHICULO));
+  });
+}
+
 export function init() {
+  escucharEntidadesEnVivo();
   if (!Session.esAdmin()) return;
 
   Socket.on('ejercicio:rebobinar_tick', (frame) => {
@@ -1194,28 +1231,6 @@ export function init() {
 
   Socket.on('admin:visibilidad_actualizada', (confirmacion) => {
     Store.aplicarCampos(confirmacion.entidad_tipo, confirmacion.entidad_id, { visible: confirmacion.visible });
-  });
-
-  Socket.on('ejercicio:unidad_creada', ({ unidad }) => {
-    Store.agregarUnidad(unidad);
-    toast(`Unidad "${unidad.nombre}" agregada al ejercicio`);
-  });
-
-  Socket.on('ejercicio:vehiculo_creado', ({ vehiculo }) => {
-    Store.agregarVehiculo(vehiculo);
-    toast(`Vehículo "${vehiculo.nombre || vehiculo.id}" agregado al ejercicio`);
-  });
-
-  Socket.on('ejercicio:unidad_modificada', (payload) => {
-    if (payload.unidad) {
-      Store.agregarUnidad(payload.unidad);
-      return;
-    }
-    Store.aplicarCampos('unidad', payload.entidad_id, camposModificados(payload, CAMPOS_UNIDAD));
-  });
-
-  Socket.on('ejercicio:vehiculo_modificado', (payload) => {
-    Store.aplicarCampos('vehiculo', payload.entidad_id, camposModificados(payload, CAMPOS_VEHICULO));
   });
 
   Store.on('estado', () => {

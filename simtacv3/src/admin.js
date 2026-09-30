@@ -1350,6 +1350,12 @@ class AdminManager {
         if (jugadorDeLaUnidad !== null && jugadorDeLaUnidad !== '') {
           data.usuarioId = Number(jugadorDeLaUnidad);
         }
+        if (this.ejercicioEnVivo()) {
+          await this.crearUnidadEnVivo(data, jugadorDeLaUnidad);
+          this.invalidarControladores();
+          alert('Unidad creada en el ejercicio en curso');
+          return;
+        }
       } else if (table === 'participantes') {
         const ejercicioId = data.ejercicio_id;
         endpoint = `/ejercicios/${ejercicioId}/participantes`;
@@ -1416,6 +1422,43 @@ class AdminManager {
       alert(`Error al crear registro: ${error.message}`);
       console.error(error);
     }
+  }
+
+  /** ¿El ejercicio en contexto es el que está corriendo en el mapa? */
+  ejercicioEnVivo() {
+    const contexto = Catalogos.ejercicioActual();
+    return !!contexto && Number(contexto) === Store.ejercicioId && Store.iniciado && Socket.conectado();
+  }
+
+  /**
+   * Con el ejercicio en marcha, `POST /unidades` escribe la base pero no el
+   * motor en memoria: la unidad no llega al mapa de nadie hasta reiniciar.
+   * Mismo criterio que el alta de vehículos (`config-catalogos.js`): va por
+   * `unidad:crear_en_ejercicio`, que la registra en el motor y emite
+   * `ejercicio:unidad_creada` a todo el ejercicio. Mismo payload que el alta
+   * en caliente del panel de dirección.
+   */
+  async crearUnidadEnVivo(data, jugadorId) {
+    if (!jugadorId) throw new Error('Elegí el jugador que la controla: de él sale el bando');
+    const jugador = (this.data.participantes_contexto || [])
+      .find((p) => String(idUsuario(p)) === String(jugadorId));
+    if (!jugador?.bando) {
+      throw new Error('Ese jugador no tiene bando en este ejercicio: revisá su participación en Participantes');
+    }
+    const plantilla = (this.data.unidades_base || [])
+      .find((p) => String(p.id) === String(data.unidad_militar_base_id));
+    if (!plantilla) throw new Error('Elegí una plantilla del catálogo');
+
+    const payload = {
+      ejercicio_id: Store.ejercicioId,
+      nombre: data.nombre,
+      sidc: Sidc.conBando(plantilla.sidc || '', jugador.bando),
+      jugador_asignado_id: Number(jugadorId),
+      unidad_militar_base_id: Number(data.unidad_militar_base_id),
+    };
+    if (Number.isFinite(data.pos_x)) payload.posicion_x = data.pos_x;
+    if (Number.isFinite(data.pos_y)) payload.posicion_y = data.pos_y;
+    await Socket.emitir('unidad:crear_en_ejercicio', payload);
   }
 
   async updateRecord(table, id, data) {
