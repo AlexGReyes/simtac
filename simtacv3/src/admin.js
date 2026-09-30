@@ -704,6 +704,7 @@ class AdminManager {
     // dueña de cada una: abriendo el formulario desde otra pestaña salían
     // vacíos. Se trae lo que falte antes de pintar.
     await this.precargarSelects(table);
+    if (table === 'unidades' && id) await this.completarUnidad(id);
 
     const formConfig = this.getFormConfig(table, id);
     title.innerHTML = `
@@ -717,6 +718,22 @@ class AdminManager {
 
     // La plantilla define el SIDC: se dibuja el símbolo mientras se escribe.
     if (table === 'unidades-base') this.conectarPreviewSidc();
+  }
+
+  /**
+   * `GET /unidades` trae un subconjunto de columnas (API.md §4): sin
+   * `unidad_militar_base_id` ni los modificadores MIL-STD. Al editar, el
+   * formulario salía sin la plantilla elegida y con esos campos vacíos. Se
+   * completa el registro de la lista con `GET /unidades/:id`.
+   */
+  async completarUnidad(id) {
+    const registro = this.data.unidades?.find((r) => String(r.id) === String(id));
+    if (!registro) return;
+    try {
+      Object.assign(registro, await this.apiGet(`/unidades/${id}`));
+    } catch (error) {
+      console.error(`No se pudo traer la unidad ${id} completa:`, error);
+    }
   }
 
   /**
